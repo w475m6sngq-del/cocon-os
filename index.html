@@ -1,0 +1,3125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COCON 運営OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Lexend:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--teal:#1a6b6b;--tm:#2a9090;--tl:#52c0c0;--tp:#e6f4f4;--am:#c05a10;--ap:#fef0e4;--gn:#2a7040;--gp:#e4f2ea;--rd:#b83030;--rp:#fde8e8;--pu:#5a3a8a;--pp:#ede8f8;--go:#a07820;--gop:#faf0d8;--ink:#1a1714;--mu:#6a6460;--ln:#dedad2;--bg:#f3f0e9;--wh:#fff;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans JP',sans-serif;font-weight:300;font-size:13px;}
+.app{display:grid;grid-template-columns:216px 1fr;min-height:100vh;}
+.sidebar{background:var(--teal);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{padding:1.1rem 1rem .75rem;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo-name{font-family:'Lexend',sans-serif;font-size:1rem;font-weight:700;}
+.sb-logo-sub{font-size:.58rem;color:rgba(255,255,255,.4);margin-top:.1rem;}
+.sb-user{padding:.55rem 1rem;background:rgba(0,0,0,.15);font-size:.7rem;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-user strong{color:#fff;display:block;font-size:.78rem;}
+.sb-sec{padding:.45rem 1rem .1rem;font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-top:.25rem;}
+.sb-item{display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;font-size:.78rem;color:rgba(255,255,255,.68);cursor:pointer;border-left:3px solid transparent;transition:all .12s;}
+.sb-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:var(--tl);font-weight:500;}
+.sb-item .ic{font-size:.85rem;flex-shrink:0;width:17px;text-align:center;}
+.sb-badge{margin-left:auto;background:var(--rd);font-size:.55rem;padding:.1rem .36rem;border-radius:8px;font-weight:700;color:#fff;}
+.sb-badge.w{background:var(--am);}
+.main{display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:#fff;border-bottom:1px solid var(--ln);padding:.62rem 1.4rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-title{font-family:'Lexend',sans-serif;font-size:.9rem;font-weight:700;}
+.content{padding:1.3rem 1.4rem;flex:1;}
+.pv{display:none;}.pv.active{display:block;animation:fin .25s ease;}
+@keyframes fin{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
+.btn{padding:.38rem .8rem;border-radius:5px;font-size:.75rem;font-family:inherit;cursor:pointer;border:none;font-weight:500;transition:all .12s;display:inline-flex;align-items:center;gap:.28rem;white-space:nowrap;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-primary{background:var(--teal);color:#fff;}.btn-primary:hover:not(:disabled){background:var(--tm);}
+.btn-secondary{background:#fff;color:var(--teal);border:1.5px solid var(--teal);}.btn-secondary:hover{background:var(--tp);}
+.btn-ghost{background:var(--bg);color:var(--mu);border:1px solid var(--ln);}.btn-ghost:hover{background:var(--ln);}
+.btn-danger{background:var(--rd);color:#fff;}
+.btn-success{background:var(--gn);color:#fff;}
+.btn-lg{padding:.6rem 1.2rem;font-size:.84rem;}
+.btn-sm{padding:.18rem .4rem;font-size:.62rem;}
+.card{background:#fff;border:1px solid var(--ln);border-radius:7px;overflow:hidden;margin-bottom:.95rem;}
+.ch{padding:.75rem 1.05rem;border-bottom:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap;}
+.ch-title{font-weight:700;font-size:.84rem;display:flex;align-items:center;gap:.4rem;}
+.cb{padding:1.05rem;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.1rem;}
+.stat{background:#fff;border:1px solid var(--ln);border-radius:7px;padding:.85rem 1rem;}
+.sv{font-family:'Lexend',sans-serif;font-size:1.65rem;font-weight:700;color:var(--teal);line-height:1;margin-bottom:.15rem;}
+.sl{font-size:.66rem;color:var(--mu);line-height:1.4;}
+.stat.w .sv{color:var(--am);}.stat.d .sv{color:var(--rd);}.stat.g .sv{color:var(--gn);}
+.badge{display:inline-flex;align-items:center;font-size:.58rem;padding:.15rem .46rem;border-radius:8px;font-weight:700;letter-spacing:.03em;white-space:nowrap;}
+.bt{background:var(--tp);color:var(--teal);}.ba{background:var(--ap);color:var(--am);}.bg{background:var(--gp);color:var(--gn);}.br{background:var(--rp);color:var(--rd);}.bp{background:var(--pp);color:var(--pu);}.bo{background:var(--gop);color:var(--go);}.bx{background:#f0ede6;color:#888;}
+.ai-chip{display:inline-flex;align-items:center;gap:.2rem;background:var(--teal);color:#fff;font-size:.54rem;padding:.1rem .4rem;border-radius:3px;font-family:'JetBrains Mono',monospace;vertical-align:middle;}
+.fg{margin-bottom:.8rem;}
+.fl{font-size:.66rem;font-weight:700;color:var(--mu);margin-bottom:.22rem;display:block;letter-spacing:.04em;}
+.fi{width:100%;padding:.45rem .62rem;border:1.5px solid var(--ln);border-radius:5px;font-family:inherit;font-size:.8rem;color:var(--ink);background:#fff;transition:border-color .12s;}
+.fi:focus{outline:none;border-color:var(--tl);}
+.fsel{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .62rem center;padding-right:1.8rem;}
+.fta{resize:vertical;min-height:65px;line-height:1.6;}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+.tbl{width:100%;border-collapse:collapse;font-size:.76rem;}
+.tbl th{text-align:left;padding:.4rem .62rem;border-bottom:2px solid var(--ln);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);font-weight:700;white-space:nowrap;}
+.tbl td{padding:.52rem .62rem;border-bottom:1px solid var(--ln);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#faf8f3;}
+.alert{border-radius:6px;padding:.72rem .9rem;margin-bottom:.8rem;font-size:.78rem;line-height:1.7;}
+.aw{background:var(--ap);border:1px solid rgba(192,90,16,.2);color:#5a2e08;}
+.ai{background:var(--tp);border:1px solid rgba(26,107,107,.2);color:#1a4a4a;}
+.as{background:var(--gp);border:1px solid rgba(42,112,64,.2);color:#1a4225;}
+.ad{background:var(--rp);border:1px solid rgba(184,48,48,.2);color:#5a1a1a;}
+.tl{position:relative;padding-left:1.3rem;}
+.tl::before{content:'';position:absolute;left:5px;top:0;bottom:0;width:1px;background:var(--ln);}
+.tli{position:relative;padding-bottom:.95rem;}
+.tld{position:absolute;left:-.95rem;top:3px;width:9px;height:9px;border-radius:50%;background:var(--teal);border:2px solid #fff;}
+.tld.w{background:var(--am);}.tld.g{background:var(--gn);}
+.tlt{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--mu);margin-bottom:.07rem;}
+.tltx{font-size:.76rem;line-height:1.6;}
+.pbar-w{display:flex;align-items:center;gap:.42rem;}
+.pbar{width:70px;height:6px;background:var(--ln);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.pbar-f{height:100%;background:var(--tl);border-radius:3px;}
+.sign-wrap{border:2px dashed var(--ln);border-radius:6px;background:#fafaf8;position:relative;cursor:crosshair;overflow:hidden;}
+.sign-wrap canvas{display:block;width:100%;height:85px;}
+.sign-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.74rem;color:#ccc;pointer-events:none;transition:opacity .2s;}
+.sign-wrap.signed .sign-hint{opacity:0;}
+.ai-loading{display:flex;align-items:center;gap:.62rem;padding:.95rem;background:var(--tp);border-radius:6px;margin-bottom:.8rem;}
+.ai-spin{width:16px;height:16px;border:2px solid rgba(26,107,107,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ai-out{border:1.5px solid var(--tl);border-radius:7px;background:#fff;overflow:hidden;margin-bottom:.8rem;}
+.ai-out-head{background:var(--teal);color:#fff;padding:.58rem 1rem;font-size:.76rem;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+.ai-out-body{padding:.95rem;font-size:.78rem;line-height:1.9;white-space:pre-wrap;}
+.cursor::after{content:'|';animation:blink .7s steps(1) infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.steps{display:flex;margin-bottom:1.35rem;}
+.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;top:12px;left:calc(50% + 12px);right:calc(-50% + 12px);height:1.5px;background:var(--ln);}
+.step.done:not(:last-child)::after,.step.active:not(:last-child)::after{background:var(--tl);}
+.sdot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;margin-bottom:.3rem;border:2px solid var(--ln);background:#fff;color:#bbb;}
+.step.done .sdot{background:var(--teal);border-color:var(--teal);color:#fff;}
+.step.active .sdot{border-color:var(--teal);color:var(--teal);}
+.slabel{font-size:.58rem;color:var(--mu);text-align:center;}
+.step.done .slabel,.step.active .slabel{color:var(--teal);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:300;display:none;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:8px;width:min(580px,96vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.mh{padding:.95rem 1.25rem;border-bottom:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;}
+.mt{font-family:'Lexend',sans-serif;font-weight:700;font-size:.9rem;}
+.mc{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--mu);}
+.mb{padding:1.25rem;}
+.mf{padding:.8rem 1.25rem;border-top:1px solid var(--ln);display:flex;justify-content:flex-end;gap:.45rem;}
+.tabs{display:flex;border-bottom:1px solid var(--ln);margin-bottom:.95rem;flex-wrap:wrap;}
+.tab{padding:.48rem .9rem;border:none;background:none;font-family:inherit;font-size:.74rem;color:var(--mu);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .12s;}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:700;}
+/* 期日管理 */
+.kj-tbl{width:100%;border-collapse:collapse;font-size:.7rem;}
+.kj-tbl th{background:var(--teal);color:#fff;padding:.36rem .52rem;text-align:center;font-size:.58rem;font-weight:700;white-space:nowrap;border:1px solid var(--tm);}
+.kj-tbl td{padding:.38rem .48rem;border:1px solid var(--ln);vertical-align:middle;text-align:center;}
+.kj-tbl tr:nth-child(even) td{background:#faf8f3;}
+.kj-name{font-weight:700;text-align:left!important;font-size:.76rem;}
+.kj-fac{text-align:left!important;}
+.cell-exp{background:#fde8e8!important;}.cell-urg{background:#fef0e4!important;}.cell-war{background:#fffbe6!important;}.cell-ok{background:#edf7f0!important;}.cell-txt{background:#f8f8f6!important;}
+.d-exp{color:var(--rd);font-weight:700;font-size:.66rem;}.d-urg{color:var(--am);font-weight:700;font-size:.66rem;}.d-war{color:var(--go);font-weight:600;font-size:.66rem;}.d-ok{color:var(--gn);font-size:.66rem;}.d-txt{color:var(--mu);font-size:.62rem;}
+/* スタッフ */
+.staff-empty{text-align:center;padding:3.5rem 2rem;color:var(--mu);}
+.staff-empty .se-icon{font-size:2.8rem;margin-bottom:.75rem;}
+.staff-empty p{font-size:.84rem;margin-bottom:1.2rem;}
+.av-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;color:#fff;flex-shrink:0;}
+/* 運営指導 */
+.shido-cat{margin-bottom:.75rem;border:1px solid var(--ln);border-radius:7px;overflow:hidden;}
+.shido-cat-head{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.05rem;cursor:pointer;font-weight:700;font-size:.84rem;}
+.shido-cat-body{border-top:1px solid var(--ln);}
+.shido-item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem 1.05rem;border-bottom:1px solid var(--ln);transition:background .1s;}
+.shido-item:last-child{border-bottom:none;}
+.shido-item:hover{background:#faf8f3;}
+.st-btn{width:32px;height:32px;flex-shrink:0;border-radius:50%;border:2px solid;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;transition:all .15s;margin-top:1px;}
+.st-none{background:#f5f5f5;border-color:#ccc;color:#bbb;}
+.st-ok{background:var(--gp);border-color:var(--gn);color:var(--gn);}
+.st-warn{background:var(--ap);border-color:var(--am);color:var(--am);}
+.st-bad{background:var(--rp);border-color:var(--rd);color:var(--rd);}
+.st-na{background:#f0ede6;border-color:#bbb;color:#aaa;}
+.si-wrap{flex:1;min-width:0;}
+.si-text{font-size:.8rem;line-height:1.6;margin-bottom:.22rem;}
+.si-meta{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.si-ref{font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--mu);background:#f0ede6;padding:.1rem .35rem;border-radius:3px;}
+.si-docs{font-size:.62rem;color:var(--teal);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+.si-memo-area{margin-top:.42rem;padding:.42rem .58rem;background:#fafaf8;border:1px solid var(--ln);border-radius:5px;display:none;}
+.si-memo-area.open{display:block;}
+.si-docs-full{font-size:.68rem;color:var(--mu);margin-bottom:.35rem;line-height:1.7;}
+.si-memo-in{width:100%;border:1px solid var(--ln);border-radius:4px;padding:.35rem .5rem;font-size:.76rem;font-family:inherit;resize:none;height:52px;color:var(--ink);}
+.si-memo-in:focus{outline:none;border-color:var(--tl);}
+.shido-progress-bar{height:8px;background:var(--ln);border-radius:4px;overflow:hidden;margin-bottom:.25rem;}
+.shido-progress-fill{height:100%;background:var(--gn);border-radius:4px;transition:width .4s;}
+.shido-cat-stats{display:flex;gap:.4rem;align-items:center;font-size:.65rem;}
+.shido-issue{display:flex;align-items:flex-start;gap:.5rem;padding:.48rem .7rem;background:var(--rp);border-left:3px solid var(--rd);margin-bottom:.35rem;border-radius:0 4px 4px 0;font-size:.76rem;}
+.shido-warn{display:flex;align-items:flex-start;gap:.5rem;padding:.48rem .7rem;background:var(--ap);border-left:3px solid var(--am);margin-bottom:.35rem;border-radius:0 4px 4px 0;font-size:.76rem;}
+/* インライン編集 */
+.editable-field{cursor:pointer;border-radius:3px;padding:.12rem .22rem;transition:background .12s;display:inline;}
+.editable-field:hover{background:var(--tp);outline:1px dashed var(--tl);}
+.edit-btn-inline{background:none;border:1px solid var(--ln);border-radius:3px;padding:.12rem .3rem;cursor:pointer;font-size:.6rem;color:var(--teal);opacity:0;transition:opacity .15s;}
+tr:hover .edit-btn-inline,.card:hover .edit-btn-inline{opacity:1;}
+/* 加算チェッカー */
+.kasan-body{padding:.1rem;border-top:1px solid var(--ln);display:none;}
+.kasan-body.open{display:block;}
+.kasan-status-btn{padding:.22rem .55rem;border-radius:12px;font-size:.62rem;font-weight:700;border:1.5px solid;cursor:pointer;font-family:inherit;transition:all .12s;}
+/* 議事録インライン編集 */
+.minutes-section{border-radius:5px;padding:.5rem .7rem;margin-bottom:.5rem;position:relative;transition:background .12s;}
+.minutes-section:hover{background:#faf8f3;}
+.minutes-edit-btn{position:absolute;top:.4rem;right:.4rem;opacity:0;background:var(--teal);color:#fff;border:none;border-radius:3px;padding:.15rem .38rem;font-size:.6rem;cursor:pointer;transition:opacity .12s;}
+.minutes-section:hover .minutes-edit-btn{opacity:1;}
+.minutes-section[contenteditable="true"]{background:var(--tp);outline:1.5px solid var(--tl);border-radius:5px;}
+/* アーカイブ編集ボタン */
+.arch-edit-btn{opacity:0;transition:opacity .15s;}
+tr:hover .arch-edit-btn{opacity:1;}
+@media print{
+.sidebar,.topbar,.no-print{display:none!important;}
+.app{display:block;}.content{padding:0;}
+.shido-cat{break-inside:avoid;}
+.si-memo-area{display:block!important;}
+}
+@media(max-width:768px){.app{grid-template-columns:1fr;}.sidebar{display:none;}.stats{grid-template-columns:1fr 1fr;}.fr2,.fr3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="sb-logo-name">COCON</div>
+      <span id="sync-dot" title="ローカルのみ" style="font-size:.85rem;cursor:pointer;" onclick="go('settings',document.querySelector('[onclick*=settings]'))">⚫</span>
+    </div>
+    <div class="sb-logo-sub">株式会社COCON 業務支援システム</div>
+  </div>
+  <div class="sb-user"><strong id="sb-user-name">（スタッフ未設定）</strong><span id="sb-user-role">管理者</span></div>
+  <nav>
+    <div class="sb-sec">メイン</div>
+    <div class="sb-item active" onclick="go('home',this)"><span class="ic">🏠</span>ダッシュボード</div>
+    <div class="sb-sec">経営管理</div>
+    <div class="sb-item" onclick="go('keiei',this)"><span class="ic">📊</span>経営ダッシュボード</div>
+    <div class="sb-sec">会議・委員会</div>
+    <div class="sb-item" onclick="go('ai-gen',this)"><span class="ic">🤖</span>AI資料生成<span class="sb-badge w">NEW</span></div>
+    <div class="sb-item" onclick="go('meetings',this)"><span class="ic">📋</span>非同期会議<span class="sb-badge" id="sb-meetings-badge">1</span></div>
+    <div class="sb-item" onclick="go('staff-confirm',this)"><span class="ic">👤</span>スタッフ確認画面</div>
+    <div class="sb-sec">利用者</div>
+    <div class="sb-item" onclick="go('residents',this)"><span class="ic">🧑‍🤝‍🧑</span>利用者詳細管理</div>
+    <div class="sb-item" onclick="go('diary',this)"><span class="ic">📓</span>日誌・記録</div>
+    <div class="sb-sec">記録管理</div>
+    <div class="sb-item" onclick="go('kijitsu',this)"><span class="ic">📅</span>期日管理<span class="sb-badge">9</span></div>
+    <div class="sb-item" onclick="go('hiyari',this)"><span class="ic">⚠️</span>ヒヤリハット<span class="sb-badge w" id="sb-hiyari-badge">3</span></div>
+    <div class="sb-item" onclick="go('hiyari-new',this)"><span class="ic">➕</span>ヒヤリハット報告</div>
+    <div class="sb-sec">経営・加算</div>
+    <div class="sb-item" onclick="go('kasan',this)"><span class="ic">💴</span>加算取得チェッカー</div>
+    <div class="sb-item" onclick="go('shido',this)"><span class="ic">✅</span>運営指導チェック<span class="sb-badge w" id="sb-shido-badge"></span></div>
+    <div class="sb-item" onclick="go('shift',this)"><span class="ic">🗓</span>シフト管理</div>
+    <div class="sb-sec">スタッフ・設定</div>
+    <div class="sb-item" onclick="go('staff-mgmt',this)"><span class="ic">👥</span>スタッフ管理</div>
+    <div class="sb-item" onclick="go('bcp',this)"><span class="ic">🆘</span>BCP・緊急連絡</div>
+    <div class="sb-item" onclick="go('settings',this)"><span class="ic">⚙️</span>設定</div>
+    <div class="sb-sec">出力</div>
+    <div class="sb-item" onclick="go('output',this)"><span class="ic">📄</span>議事録出力</div>
+    <div class="sb-item" onclick="go('history',this)"><span class="ic">🗂</span>記録アーカイブ</div>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+<div class="topbar">
+  <div class="tb-title" id="tb-title">ダッシュボード</div>
+  <div style="display:flex;gap:.42rem;align-items:center;" class="no-print">
+    <span style="font-size:.66rem;color:var(--mu);">株式会社COCON｜9事業所 37名管理中</span>
+    <button class="btn btn-ghost" onclick="go('kijitsu',null)">📅 期日管理</button>
+    <button class="btn btn-primary" onclick="go('ai-gen',null)">🤖 AI資料生成</button>
+  </div>
+</div>
+<div class="content">
+
+<!-- ══ HOME ══ -->
+<div class="pv active" id="pv-home">
+  <div class="stats">
+    <div class="stat d"><div class="sv" id="stat-urg">9</div><div class="sl">期日 要対応（30日以内）</div></div>
+    <div class="stat w"><div class="sv" id="shido-issue-cnt">—</div><div class="sl">運営指導 要対応・未対応</div></div>
+    <div class="stat w"><div class="sv" id="home-hiyari-cnt">3</div><div class="sl">未処理ヒヤリハット</div></div>
+    <div class="stat g"><div class="sv" id="staff-cnt">0</div><div class="sl">登録スタッフ数</div></div>
+  </div>
+  <div class="alert ad" id="home-alert-urg" style="position:relative;">
+    <span id="home-alert-text">🔴 <strong>【緊急】生保受給証の期限が9名で残り24日（3/31）です。</strong>
+    梅田本町・大沼・西金野井①②・藤塚 の各担当者は至急更新手続きを確認してください。</span>
+    <button class="btn btn-ghost btn-sm no-print" style="margin-left:.5rem;" onclick="editHomeAlert()">✏️ 編集</button>
+    <button class="btn btn-danger no-print" style="margin-left:.4rem;font-size:.68rem;padding:.2rem .5rem;" onclick="go('kijitsu',null)">📅 詳細</button>
+  </div>
+  <div class="fr2">
+    <div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">📅 期日アラート TOP5</div><button class="btn btn-ghost" style="font-size:.66rem;" onclick="go('kijitsu',null)">全件</button></div>
+        <table class="tbl"><thead><tr><th>利用者</th><th>事業所</th><th>書類</th><th>残り</th></tr></thead>
+        <tbody id="home-kj-tbl"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">✅ 運営指導 準備状況</div><button class="btn btn-ghost" style="font-size:.66rem;" onclick="go('shido',null)">詳細</button></div>
+        <div class="cb" id="home-shido-summary" style="font-size:.8rem;color:var(--mu);text-align:center;padding:1.5rem;">チェックを開始するとここに表示されます</div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">🏢 事業所別 期日状況</div></div>
+        <div class="cb" id="home-fac-summary"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">🕐 最近のアクティビティ</div><button class="btn btn-ghost btn-sm no-print" onclick="openActivityEdit()">＋ 追加</button></div>
+        <div class="cb">
+          <div class="tl" id="home-activity-list">
+            <div class="tli"><div class="tld w"></div><div class="tlt">03/07 システム</div><div class="tltx">🔴 生保受給証 残24日：9名（梅田本町・大沼・西金野井①②・藤塚）</div></div>
+            <div class="tli"><div class="tld g"></div><div class="tlt">03/05 10:30</div><div class="tltx">虐待防止委員会（第2回）の配信を開始しました</div></div>
+            <div class="tli"><div class="tld w"></div><div class="tlt">03/06 02:40</div><div class="tltx">ヒヤリハット：夜間廊下でのふらつき（梅田本町）</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ スタッフ管理 ══ -->
+<div class="pv" id="pv-staff-mgmt">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
+    <div style="font-size:.82rem;color:var(--mu);">スタッフ情報を登録すると、AI資料生成・委員会管理に自動で反映されます。</div>
+    <button class="btn btn-primary" onclick="openStaffModal()">＋ スタッフを追加</button>
+  </div>
+  <div class="card" id="staff-card">
+    <div class="ch"><div class="ch-title">👥 スタッフ一覧</div><span class="badge bt" id="staff-total-badge">0名</span></div>
+    <div id="staff-list-wrap"></div>
+  </div>
+</div>
+
+<!-- ══ スタッフ確認画面 ══ -->
+<div class="pv" id="pv-staff-confirm">
+  <div class="alert aw">🔔 <strong>スタッフ確認画面</strong>　会議資料の確認・署名はここで行います。</div>
+  <div class="card">
+    <div class="ch"><div class="ch-title" id="confirm-meeting-title">虐待防止委員会（第2回）</div><span class="badge ba">未確認</span></div>
+    <div class="cb">
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem;">【議題１】前回決定事項の進捗確認</div>
+      <div style="font-size:.78rem;color:var(--mu);margin-bottom:.82rem;line-height:1.7;">夜間帯の申し送りルール強化の実施状況を確認する。</div>
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem;">【議題２】ヒヤリハット事例の振り返り（3件）</div>
+      <div style="font-size:.78rem;color:var(--mu);margin-bottom:.82rem;line-height:1.7;">2月〜3月に報告された3件について原因・再発防止策を協議する。</div>
+      <div style="font-size:.82rem;font-weight:700;margin-bottom:.35rem;">【議題３】虐待防止研修（4月実施予定）の日程確定</div>
+      <div style="font-size:.78rem;color:var(--mu);margin-bottom:1rem;line-height:1.7;">全スタッフ対象研修を4月第2週に実施予定。</div>
+      <div style="border-top:1px solid var(--ln);padding-top:.82rem;margin-bottom:.82rem;">
+        <label class="fl">コメント・意見（任意）</label>
+        <textarea class="fi fta" id="confirm-comment" placeholder="ご意見・申し送りがあれば..." style="min-height:52px;"></textarea>
+      </div>
+      <div style="border-top:1px solid var(--ln);padding-top:.82rem;">
+        <div class="fl" style="margin-bottom:.35rem;">電子署名</div>
+        <div class="sign-wrap" id="sw"><canvas id="sc" width="520" height="85"></canvas><div class="sign-hint">ここに署名してください</div></div>
+        <div style="display:flex;gap:.42rem;margin:.42rem 0 .82rem;"><button class="btn btn-ghost" onclick="clearSign()" style="font-size:.68rem;">クリア</button></div>
+        <div id="signed-banner" class="alert as" style="display:none;">✅ 確認・署名が完了しました。（2026/03/07）</div>
+        <button class="btn btn-success btn-lg" style="width:100%;" id="sign-btn" onclick="submitSign()">✓ 確認・署名して送信</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 期日管理 ══ -->
+<div class="pv" id="pv-kijitsu">
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat d"><div class="sv" id="kj-urg">—</div><div class="sl">要対応（30日以内）</div></div>
+    <div class="stat w"><div class="sv" id="kj-war">—</div><div class="sl">注意（31〜90日）</div></div>
+    <div class="stat g"><div class="sv" id="kj-ok">—</div><div class="sl">余裕あり（91日以上）</div></div>
+    <div class="stat"><div class="sv">36</div><div class="sl">全利用者数</div></div>
+  </div>
+  <div class="alert ad" id="kj-alert" style="display:none;"></div>
+  <div class="card">
+    <div class="ch">
+      <div class="ch-title">📅 期日管理一覧｜全利用者</div>
+      <div style="display:flex;gap:.5rem;align-items:center;" class="no-print">
+        <span style="font-size:.65rem;"><span style="background:var(--rp);padding:.1rem .3rem;border-radius:3px;">■超過</span> <span style="background:var(--ap);padding:.1rem .3rem;border-radius:3px;">■30日</span> <span style="background:#fffbe6;padding:.1rem .3rem;border-radius:3px;">■90日</span> <span style="background:var(--gp);padding:.1rem .3rem;border-radius:3px;">■余裕</span></span>
+        <button class="btn btn-secondary" onclick="window.print()" style="font-size:.66rem;padding:.2rem .5rem;">🖨</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddResidentModal()">＋ 利用者追加</button>
+      </div>
+    </div>
+    <div class="tabs" id="kj-tabs" style="padding:0 1rem;margin-bottom:0;border-bottom:1px solid var(--ln);">
+      <button class="tab active" onclick="filterFac('全施設',this)">全施設</button>
+      <button class="tab" onclick="filterFac('梅田本町',this)">梅田本町</button>
+      <button class="tab" onclick="filterFac('大沼',this)">大沼</button>
+      <button class="tab" onclick="filterFac('西金野井①',this)">西金野井①</button>
+      <button class="tab" onclick="filterFac('西金野井②',this)">西金野井②</button>
+      <button class="tab" onclick="filterFac('藤塚',this)">藤塚</button>
+      <button class="tab" onclick="filterFac('牛島',this)">牛島</button>
+      <button class="tab" onclick="filterFac('南中曾根',this)">南中曾根</button>
+      <button class="tab" onclick="filterFac('西金野井③',this)">西金野井③</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="kj-tbl" id="kj-table">
+        <thead><tr>
+          <th style="text-align:left;min-width:68px;">事業所</th>
+          <th style="text-align:left;min-width:56px;">氏名</th>
+          <th style="min-width:72px;">受給者証</th>
+          <th style="min-width:72px;">障害者手帳</th>
+          <th style="min-width:72px;">自立支援医療</th>
+          <th style="min-width:72px;">重度心身医療費</th>
+          <th style="min-width:72px;">生保受給証</th>
+          <th style="text-align:left;min-width:88px;">備考</th>
+          <th style="min-width:44px;" class="no-print">編集</th>
+        </tr></thead>
+        <tbody id="kj-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 運営指導チェック ══ -->
+<div class="pv" id="pv-shido">
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat g"><div class="sv" id="sh-ok">0</div><div class="sl">済（確認完了）</div></div>
+    <div class="stat d"><div class="sv" id="sh-bad">0</div><div class="sl">未対応</div></div>
+    <div class="stat w"><div class="sv" id="sh-warn">0</div><div class="sl">要対応</div></div>
+    <div class="stat"><div class="sv" id="sh-none">34</div><div class="sl">未確認</div></div>
+  </div>
+  <div class="card" style="margin-bottom:.95rem;">
+    <div class="cb" style="padding:.85rem 1.05rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+        <span style="font-size:.76rem;font-weight:700;">全体 準備完了率</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--gn);font-weight:700;" id="sh-pct">0%</span>
+      </div>
+      <div class="shido-progress-bar"><div class="shido-progress-fill" id="sh-progress" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:.4rem;font-size:.65rem;color:var(--mu);">
+        <span>法人名：株式会社COCON　8事業所</span>
+        <div style="display:flex;gap:.5rem;" class="no-print">
+          <button class="btn btn-ghost" style="font-size:.66rem;padding:.2rem .5rem;" onclick="filterShido('all')">全て</button>
+          <button class="btn btn-ghost" style="font-size:.66rem;padding:.2rem .5rem;" onclick="filterShido('issue')">要対応・未対応のみ</button>
+          <button class="btn btn-ghost" style="font-size:.66rem;padding:.2rem .5rem;" onclick="filterShido('unchecked')">未確認のみ</button>
+          <button class="btn btn-secondary" style="font-size:.66rem;padding:.2rem .5rem;" onclick="window.print()">🖨 準備レポート</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="shido-issues-wrap" style="display:none;">
+    <div class="card" style="margin-bottom:.95rem;">
+      <div class="ch"><div class="ch-title" style="color:var(--rd);">⚠️ 要対応・未対応 事項まとめ</div><span class="badge br" id="shido-issues-cnt"></span></div>
+      <div class="cb" id="shido-issues-list"></div>
+    </div>
+  </div>
+  <div id="shido-body"></div>
+</div>
+
+<!-- ══ AI生成 ══ -->
+<div class="pv" id="pv-ai-gen">
+  <div class="steps">
+    <div class="step active" id="gstep1"><div class="sdot">①</div><div class="slabel">情報入力</div></div>
+    <div class="step" id="gstep2"><div class="sdot">②</div><div class="slabel">AI生成</div></div>
+    <div class="step" id="gstep3"><div class="sdot">③</div><div class="slabel">確認・編集</div></div>
+    <div class="step" id="gstep4"><div class="sdot">④</div><div class="slabel">配信完了</div></div>
+  </div>
+  <div id="gs1">
+    <div class="card">
+      <div class="ch"><div class="ch-title">📝 委員会情報の入力</div><span class="ai-chip">🤖 AIが資料化</span></div>
+      <div class="cb">
+        <div class="fr2">
+          <div class="fg"><label class="fl">委員会の種類</label>
+            <select class="fi fsel" id="g-type" onchange="onType()">
+              <option value="">選択してください</option>
+              <option value="abuse">虐待防止委員会</option>
+              <option value="infection">感染対策委員会</option>
+              <option value="restraint">身体拘束廃止委員会</option>
+              <option value="support">個別支援会議</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">事業所</label>
+            <select class="fi fsel" id="g-ward">
+              <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option><option>全事業所合同</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">回数</label><input class="fi" id="g-round" placeholder="例：第2回"></div>
+          <div class="fg"><label class="fl">確認期限</label><input class="fi" type="date" id="g-deadline"></div>
+        </div>
+        <div id="ex-abuse" style="display:none;" class="fg"><label class="fl">前回以降のヒヤリハット件数・概要</label><textarea class="fi fta" id="g-abuse-h" placeholder="例：3件（転倒1・服薬1・声かけ1）"></textarea></div>
+        <div id="ex-infection" style="display:none;" class="fg"><label class="fl">前回以降の感染発生状況</label><textarea class="fi fta" id="g-inf-s"></textarea></div>
+        <div id="ex-restraint" style="display:none;" class="fg"><label class="fl">現在の身体拘束の状況</label><textarea class="fi fta" id="g-res-s"></textarea></div>
+        <div id="ex-support" style="display:none;">
+          <div class="fr2">
+            <div class="fg"><label class="fl">対象者</label><input class="fi" id="g-sup-name"></div>
+            <div class="fg"><label class="fl">障害種別</label><select class="fi fsel" id="g-sup-type"><option>知的障害</option><option>精神障害</option><option>身体障害</option><option>重複障害</option></select></div>
+          </div>
+          <div class="fg"><label class="fl">現在の生活状況・課題</label><textarea class="fi fta" id="g-sup-s"></textarea></div>
+        </div>
+        <div class="fg"><label class="fl">前回の決定事項</label><textarea class="fi fta" id="g-prev"></textarea></div>
+        <div class="fg"><label class="fl">追加で検討したいこと（任意）</label><textarea class="fi fta" id="g-extra"></textarea></div>
+        <div style="display:flex;justify-content:flex-end;padding-top:.68rem;border-top:1px solid var(--ln);">
+          <button class="btn btn-primary btn-lg" onclick="startGen()">🤖 AIで資料を生成する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="gs2" style="display:none;">
+    <div class="ai-loading" id="gen-loading"><div class="ai-spin"></div><div style="font-size:.78rem;color:var(--teal);">AIが資料を生成しています...</div></div>
+    <div class="ai-out" id="gen-out" style="display:none;">
+      <div class="ai-out-head"><span>🤖 AI生成結果 <span class="ai-chip" id="gen-label"></span></span><button class="btn btn-ghost no-print" onclick="window.print()" style="font-size:.64rem;padding:.18rem .42rem;">🖨</button></div>
+      <div class="ai-out-body" id="gen-text"></div>
+    </div>
+    <div id="gs2-actions" style="display:none;">
+      <div class="card"><div class="ch"><div class="ch-title">✏️ 確認・編集</div></div>
+        <div class="cb">
+          <textarea class="fi fta" id="gen-edit" style="min-height:260px;font-size:.76rem;line-height:1.8;"></textarea>
+          <div style="display:flex;justify-content:space-between;margin-top:.68rem;flex-wrap:wrap;gap:.45rem;">
+            <button class="btn btn-ghost" onclick="startGen()">🔄 再生成</button>
+            <button class="btn btn-primary btn-lg" onclick="goDist()">✓ この内容で配信へ →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="gs3" style="display:none;">
+    <div class="card"><div class="ch"><div class="ch-title">📤 スタッフへの配信設定</div></div>
+      <div class="cb">
+        <div class="fg"><label class="fl">確認するスタッフ</label>
+          <div id="dist-staff-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;">
+            <div class="alert ai" style="grid-column:1/-1;font-size:.74rem;">👥 スタッフ管理から登録すると自動表示されます。<button class="btn btn-ghost" onclick="go('staff-mgmt',null)" style="margin-left:.5rem;font-size:.68rem;padding:.18rem .42rem;">登録する</button></div>
+          </div>
+        </div>
+        <div class="alert ai">📱 配信するとスタッフのスマートフォンへ通知が届きます。全員確認後に議事録が自動生成されます。</div>
+        <div style="display:flex;justify-content:flex-end;gap:.45rem;">
+          <button class="btn btn-ghost" onclick="gs2Show()">← 戻る</button>
+          <button class="btn btn-primary btn-lg" onclick="distribute()">✓ スタッフへ配信する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 会議一覧 ══ -->
+<div class="pv" id="pv-meetings">
+  <div class="card">
+    <div class="ch"><div class="ch-title">進行中の会議</div><button class="btn btn-primary" onclick="go('ai-gen',null)" style="font-size:.7rem;">＋ 新規作成</button></div>
+    <table class="tbl" id="meetings-table">
+      <thead><tr><th>会議名</th><th>事業所</th><th>確認進捗</th><th>期限</th><th>操作</th></tr></thead>
+      <tbody id="meetings-tbody"></tbody>
+    </table>
+    <div class="cb" style="padding:.7rem 1rem;border-top:1px solid var(--ln);font-size:.76rem;color:var(--mu);">
+      💡 スタッフを登録すると確認進捗が表示されます。<button class="btn btn-ghost" onclick="go('staff-mgmt',null)" style="margin-left:.5rem;font-size:.68rem;padding:.18rem .42rem;">スタッフを登録</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ヒヤリハット ══ -->
+<div class="pv" id="pv-hiyari">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.95rem;flex-wrap:wrap;gap:.45rem;">
+    <div style="font-size:.8rem;font-weight:700;">全8事業所 ヒヤリハット・事故報告</div>
+    <button class="btn btn-primary" onclick="go('hiyari-new',null)">➕ 報告する</button>
+  </div>
+  <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat w"><div class="sv" id="hiyari-unproc">3</div><div class="sl">今月 未処理件数</div></div>
+    <div class="stat"><div class="sv" id="hiyari-total">7</div><div class="sl">今月 総報告件数</div></div>
+    <div class="stat"><div class="sv">3</div><div class="sl">転倒・転落（多発）</div></div>
+    <div class="stat g"><div class="sv">-30%</div><div class="sl">前月比</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">⚠️ ヒヤリハット一覧 <span class="ai-chip">🤖 AI傾向分析</span></div></div>
+    <div class="alert ai" style="margin:.68rem;border-radius:5px;font-size:.76rem;">🤖 <strong>AI検出：</strong>夜間21時〜翌4時の転倒・転落が集中（3件/7件）。廊下照明の強化とトイレ誘導の見直しを推奨します。</div>
+    <table class="tbl">
+      <thead><tr><th>日時</th><th>事業所</th><th>種別</th><th>概要</th><th>状態</th><th class="no-print">操作</th></tr></thead>
+      <tbody id="hiyari-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ ヒヤリハット報告 ══ -->
+<div class="pv" id="pv-hiyari-new">
+  <div class="card">
+    <div class="ch"><div class="ch-title">➕ ヒヤリハット・事故報告</div></div>
+    <div class="cb">
+      <div class="fr3">
+        <div class="fg"><label class="fl">発生日時</label><input class="fi" type="datetime-local" id="hn-dt"></div>
+        <div class="fg"><label class="fl">事業所</label><select class="fi fsel" id="hn-fac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option></select></div>
+        <div class="fg"><label class="fl">報告者</label><input class="fi" id="hn-reporter" placeholder="氏名"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">種別</label><select class="fi fsel" id="hn-type"><option>転倒・転落</option><option>服薬関連</option><option>声かけ・対応</option><option>外出・離棟</option><option>誤嚥・窒息</option><option>事故（怪我あり）</option><option>その他</option></select></div>
+        <div class="fg"><label class="fl">対象者</label><input class="fi" id="hn-person" placeholder="利用者名"></div>
+      </div>
+      <div class="fg"><label class="fl">状況の説明</label><textarea class="fi fta" id="hn-desc" placeholder="何が起きたか具体的に..."></textarea></div>
+      <div class="fg"><label class="fl">原因と考えられること</label><textarea class="fi fta" id="hn-cause"></textarea></div>
+      <div class="fg"><label class="fl">とった対応・処置</label><textarea class="fi fta" id="hn-action"></textarea></div>
+      <div class="fg"><label class="fl">再発防止のアイデア</label><textarea class="fi fta" id="hn-prevention"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;gap:.45rem;padding-top:.68rem;border-top:1px solid var(--ln);">
+        <button class="btn btn-ghost" onclick="go('hiyari',null)">キャンセル</button>
+        <button class="btn btn-primary btn-lg" onclick="submitHiyari()">✓ 報告を送信する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 加算チェッカー ══ -->
+<div class="pv" id="pv-kasan">
+  <div class="alert aw" id="kasan-alert">💡 <strong>株式会社COCON｜月額 約 ¥92,400 の取りこぼしが検出されました。</strong>
+    <button class="btn btn-ghost btn-sm no-print" style="margin-left:.5rem;" onclick="editKasanAlert()">✏️ 編集</button>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">💴 加算取得状況チェック <span class="ai-chip">🤖 AI診断</span></div>
+      <button class="btn btn-primary btn-sm no-print" onclick="openAddKasanModal()">＋ 加算項目追加</button>
+    </div>
+    <div class="cb" id="kasan-body"></div>
+  </div>
+</div>
+
+<!-- ══ 議事録出力 ══ -->
+<div class="pv" id="pv-output">
+  <div class="no-print" style="display:flex;justify-content:flex-end;gap:.45rem;margin-bottom:.95rem;">
+    <div class="alert ai" style="margin:0;padding:.45rem .75rem;font-size:.72rem;">✏️ 各項目をクリックして直接編集できます</div>
+    <button class="btn btn-ghost" onclick="toggleMinutesEdit()">✏️ 編集モード</button>
+    <button class="btn btn-secondary" onclick="window.print()">🖨 印刷 / PDF</button>
+  </div>
+  <div style="background:#fff;border:1px solid var(--ln);border-radius:6px;padding:2rem;font-size:.78rem;line-height:1.8;" id="minutes-doc">
+    <div class="minutes-section" id="ms-title" style="text-align:center;">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:.16rem;" contenteditable="false" id="me-title">虐待防止委員会（第2回）　議事録</div>
+      <div style="font-size:.68rem;color:var(--mu);" contenteditable="false" id="me-subtitle">株式会社COCON　梅田本町 ／ 非同期（書面）開催</div>
+      <button class="minutes-edit-btn no-print" onclick="editMinutesSection('title')">✏️ 編集</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.42rem;margin-bottom:1.1rem;">
+      <div style="border:1px solid var(--ln);padding:.36rem .52rem;border-radius:3px;cursor:pointer;" onclick="editMinutesMeta(0)">
+        <div style="font-size:.58rem;color:var(--mu);">確認期間</div>
+        <div style="font-size:.74rem;font-weight:700;" id="mm-0">2026/03/05 〜 03/15</div>
+      </div>
+      <div style="border:1px solid var(--ln);padding:.36rem .52rem;border-radius:3px;cursor:pointer;" onclick="editMinutesMeta(1)">
+        <div style="font-size:.58rem;color:var(--mu);">出席率</div>
+        <div style="font-size:.74rem;font-weight:700;" id="mm-1">（スタッフ登録後に表示）</div>
+      </div>
+      <div style="border:1px solid var(--ln);padding:.36rem .52rem;border-radius:3px;cursor:pointer;" onclick="editMinutesMeta(2)">
+        <div style="font-size:.58rem;color:var(--mu);">記録作成</div>
+        <div style="font-size:.74rem;font-weight:700;" id="mm-2">自動生成 2026/03/07</div>
+      </div>
+    </div>
+    <div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--teal);border-bottom:1.5px solid var(--tl);padding-bottom:.16rem;margin-bottom:.68rem;">決定事項</div>
+    <div id="minutes-decisions">
+      <div class="minutes-section">
+        <strong>①</strong> <span contenteditable="false" class="me-decision">虐待防止研修を4月16日に実施</span>
+        <button class="minutes-edit-btn no-print" onclick="editDecision(this)">✏️</button>
+      </div>
+      <div class="minutes-section">
+        <strong>②</strong> <span contenteditable="false" class="me-decision">廊下照明・トイレ誘導方法の見直し案提出（期限：3/25）</span>
+        <button class="minutes-edit-btn no-print" onclick="editDecision(this)">✏️</button>
+      </div>
+      <div class="minutes-section">
+        <strong>③</strong> <span contenteditable="false" class="me-decision">生保受給証 期限切れ対応：9名分を3/31までに更新手続き完了</span>
+        <button class="minutes-edit-btn no-print" onclick="editDecision(this)">✏️</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin:.5rem 0 1rem;flex-wrap:wrap;" class="no-print">
+      <button class="btn btn-ghost btn-sm" onclick="addDecision()">＋ 決定事項を追加</button>
+    </div>
+    <div style="margin-top:1.1rem;padding-top:.68rem;border-top:1px solid var(--ln);font-size:.66rem;color:var(--mu);" contenteditable="false" id="me-footer">本議事録はCOCON非同期会議システムにより自動生成されました。</div>
+  </div>
+</div>
+
+<!-- ══ アーカイブ ══ -->
+<div class="pv" id="pv-history">
+  <div class="card">
+    <div class="ch"><div class="ch-title">🗂 記録アーカイブ｜株式会社COCON</div>
+      <button class="btn btn-primary btn-sm no-print" onclick="openAddArchiveModal()">＋ 追加</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>種別</th><th>会議名</th><th>事業所</th><th>生成日</th><th>完了</th><th class="no-print">操作</th></tr></thead>
+      <tbody id="history-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ══ 経営ダッシュボード ══ -->
+<div class="pv" id="pv-keiei">
+  <div class="stats" id="keiei-stats"></div>
+  <div class="card">
+    <div class="ch">
+      <div class="ch-title">📊 事業所別 経営状況</div>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        <span style="font-size:.7rem;color:var(--mu);" id="keiei-month-label"></span>
+        <button class="btn btn-ghost btn-sm" onclick="openAddFacilityModal()">＋ 棟を追加</button>
+        <button class="btn btn-primary btn-sm" onclick="openKeieiEditModal()">✏️ データ編集</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;"><table class="tbl" id="keiei-tbl">
+      <thead><tr><th>事業所</th><th>定員</th><th>入居者数</th><th>稼働率</th><th>月間売上見込み</th><th>人件費率</th><th class="no-print">操作</th></tr></thead>
+      <tbody id="keiei-tbody"></tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">💴 給与・人件費実績</div></div>
+    <div class="cb" id="keiei-payroll-card"><div class="alert ai" style="font-size:.76rem;">💡 給与明細データが反映されます。</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">📈 月次推移（サマリー）</div></div>
+    <div class="cb" id="keiei-monthly-card">
+      <div class="alert ai" style="font-size:.76rem;">💡 データを編集すると月次推移が更新されます。各事業所の稼働率・人件費率の改善目標を設定してください。</div>
+      <div class="fr2">
+        <div style="border:1px solid var(--ln);border-radius:6px;padding:.75rem 1rem;">
+          <div style="font-size:.65rem;color:var(--mu);margin-bottom:.3rem;">全体 稼働率目標</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:1.4rem;font-weight:700;color:var(--gn);" id="keiei-occ-rate">—</div>
+        </div>
+        <div style="border:1px solid var(--ln);border-radius:6px;padding:.75rem 1rem;">
+          <div style="font-size:.65rem;color:var(--mu);margin-bottom:.3rem;">全体 人件費率</div>
+          <div style="font-family:'Lexend',sans-serif;font-size:1.4rem;font-weight:700;color:var(--am);" id="keiei-labor-rate">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 利用者詳細管理 ══ -->
+<div class="pv" id="pv-residents">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.95rem;flex-wrap:wrap;gap:.5rem;">
+    <div style="font-size:.82rem;color:var(--mu);">利用者の服薬・金銭・支援計画を一元管理できます。</div>
+    <button class="btn btn-primary" onclick="openAddResidentModal()">＋ 利用者を追加</button>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">🧑‍🤝‍🧑 利用者一覧</div><span class="badge bt" id="res-total-badge">—</span></div>
+    <div class="tabs" id="res-detail-tabs" style="padding:0 1rem;margin-bottom:0;">
+      <button class="tab active" onclick="filterResDet('全施設',this)">全施設</button>
+      <button class="tab" onclick="filterResDet('梅田本町',this)">梅田本町</button>
+      <button class="tab" onclick="filterResDet('大沼',this)">大沼</button>
+      <button class="tab" onclick="filterResDet('西金野井①',this)">西金野井①</button>
+      <button class="tab" onclick="filterResDet('西金野井②',this)">西金野井②</button>
+      <button class="tab" onclick="filterResDet('藤塚',this)">藤塚</button>
+      <button class="tab" onclick="filterResDet('牛島',this)">牛島</button>
+      <button class="tab" onclick="filterResDet('南中曾根',this)">南中曾根</button>
+      <button class="tab" onclick="filterResDet('西金野井③',this)">西金野井③</button>
+    </div>
+    <div style="overflow-x:auto;"><table class="tbl">
+      <thead><tr><th>事業所</th><th>氏名</th><th>生年月日</th><th>障害種別</th><th>支援区分</th><th>服薬</th><th>金銭管理</th><th>支援計画更新</th></tr></thead>
+      <tbody id="res-detail-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ 日誌・記録 ══ -->
+<div class="pv" id="pv-diary">
+  <div class="card">
+    <div class="ch" style="flex-wrap:wrap;gap:.5rem;">
+      <div class="ch-title">📓 日誌・記録</div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+        <input class="fi" type="date" id="diary-date-filter" style="width:140px;">
+        <select class="fi fsel" id="diary-fac-filter" style="width:120px;">
+          <option value="">全事業所</option>
+          <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option>
+        </select>
+        <input class="fi" id="diary-recorder-filter" placeholder="記録者" style="width:100px;">
+        <button class="btn btn-primary" onclick="openDiaryAddModal()">＋ 記録を追加</button>
+      </div>
+    </div>
+    <div class="tabs" id="diary-tabs" style="padding:0 1rem;margin-bottom:0;">
+      <button class="tab active" onclick="filterDiary('全て',this)">全て</button>
+      <button class="tab" onclick="filterDiary('申し送り',this)">申し送り</button>
+      <button class="tab" onclick="filterDiary('バイタル',this)">バイタル</button>
+      <button class="tab" onclick="filterDiary('服薬確認',this)">服薬</button>
+      <button class="tab" onclick="filterDiary('日誌',this)">日誌</button>
+    </div>
+    <div style="overflow-x:auto;"><table class="tbl">
+      <thead><tr><th>日時</th><th>事業所</th><th>種別</th><th>対象者</th><th>内容</th><th>記録者</th><th class="no-print">操作</th></tr></thead>
+      <tbody id="diary-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ シフト管理 ══ -->
+<div class="pv" id="pv-shift">
+  <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.95rem;flex-wrap:wrap;">
+    <select class="fi fsel" id="shift-month-sel" style="width:130px;" onchange="renderShift()">
+      <option>2026-04</option><option>2026-05</option><option>2026-06</option>
+    </select>
+    <select class="fi fsel" id="shift-fac-sel" style="width:130px;" onchange="renderShift()">
+      <option value="">全事業所</option>
+      <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option>
+    </select>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">🔢 常勤換算計算</div></div>
+    <div class="cb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">常勤の週所定労働時間（h）</label><input class="fi" id="shift-full-hours" type="number" value="40" min="1" max="60" onchange="calcShiftConv()"></div>
+        <div class="fg" style="display:flex;align-items:flex-end;gap:.5rem;">
+          <div style="flex:1;"><label class="fl">配置基準チェック結果</label><div id="shift-check-result" class="alert ai" style="margin:0;padding:.45rem .75rem;font-size:.76rem;">スタッフ登録後に自動計算されます</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">📋 月間シフト概要</div></div>
+    <div style="overflow-x:auto;"><table class="tbl">
+      <thead><tr><th>スタッフ名</th><th>事業所</th><th>役職</th><th>雇用形態</th><th>担当シフト</th><th>週勤務時間(h)</th><th>常勤換算値</th></tr></thead>
+      <tbody id="shift-tbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ══ BCP・緊急連絡 ══ -->
+<div class="pv" id="pv-bcp">
+  <div class="fr2">
+    <div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">📞 緊急連絡先</div><button class="btn btn-primary btn-sm" onclick="openBcpContactModal()">＋ 追加</button></div>
+        <table class="tbl"><thead><tr><th>役職</th><th>氏名</th><th>電話番号</th><th>担当事業所</th><th class="no-print">編集</th></tr></thead>
+        <tbody id="bcp-contacts-tbody"></tbody></table>
+      </div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">🏃 避難場所一覧</div></div>
+        <table class="tbl"><thead><tr><th>事業所</th><th>避難場所</th><th>距離</th><th>備考</th><th class="no-print">編集</th></tr></thead>
+        <tbody id="bcp-shelters-tbody"></tbody></table>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ch"><div class="ch-title">✅ 災害対応チェックリスト</div><button class="btn btn-ghost btn-sm" onclick="resetBcpChecklist()">リセット</button></div>
+        <div class="cb" id="bcp-checklist-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 設定 ══ -->
+<div class="pv" id="pv-settings">
+  <div class="card">
+    <div class="ch"><div class="ch-title">🔑 Claude API設定</div></div>
+    <div class="cb">
+      <div class="alert ai">APIキーを設定するとAI資料生成・AI分析が利用できます。<br>取得先: console.anthropic.com</div>
+      <div class="fg">
+        <label class="fl">Anthropic APIキー</label>
+        <input class="fi" id="api-key-input" type="password" placeholder="sk-ant-...">
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+        <button class="btn btn-primary" onclick="saveApiKey()">✓ 保存</button>
+        <button class="btn btn-ghost" onclick="toggleApiKeyVisibility()">👁 表示/非表示</button>
+      </div>
+      <div id="api-key-status" style="margin-top:.5rem;font-size:.74rem;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">🏢 法人・システム情報</div></div>
+    <div class="cb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">法人名</label><input class="fi" id="set-corp" value="株式会社COCON"></div>
+        <div class="fg"><label class="fl">所在地</label><input class="fi" id="set-addr" value="埼玉県春日部市"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">代表者名</label><input class="fi" id="set-rep" placeholder="代表者名"></div>
+        <div class="fg"><label class="fl">指定番号</label><input class="fi" id="set-no" placeholder="事業所番号"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveCorpSettings()">✓ 保存</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">☁️ Supabase 同期設定</div><span id="sync-dot-settings" style="font-size:1rem;"></span></div>
+    <div class="cb">
+      <div class="alert ai" style="font-size:.76rem;">URLと匿名キーを設定すると、スタッフ全員が同じデータをリアルタイムで共有できます。</div>
+      <div class="fg"><label class="fl">Supabase URL</label><input class="fi" id="sb-url-input" type="text" placeholder="https://xxxxxxxx.supabase.co"></div>
+      <div class="fg" style="margin-top:.5rem;"><label class="fl">匿名キー（anon key）</label><input class="fi" id="sb-anon-input" type="password" placeholder="eyJ..."></div>
+      <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="saveSupabaseSettings()">✓ 保存して接続</button>
+        <button class="btn btn-ghost" onclick="testSupabaseConnection()">🔌 接続テスト</button>
+      </div>
+      <div id="sb-status-msg" style="margin-top:.5rem;font-size:.74rem;"></div>
+      <div style="margin-top:1rem;padding:.75rem;background:var(--tp);border-radius:6px;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--teal);margin-bottom:.4rem;">① Supabase で実行するSQL（初回のみ）</div>
+        <pre style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--ink);white-space:pre-wrap;line-height:1.6;">CREATE TABLE app_data (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE app_data ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_all" ON app_data
+  FOR ALL USING (true) WITH CHECK (true);</pre>
+        <div style="font-size:.72rem;font-weight:700;color:var(--teal);margin:.6rem 0 .3rem;">② Realtime を有効化（Supabase管理画面）</div>
+        <div style="font-size:.7rem;color:var(--mu);">Database → Replication → Source → <strong>app_data</strong> をONにする</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">💾 データ管理</div></div>
+    <div class="cb" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+      <button class="btn btn-secondary" onclick="exportData()">⬇ データエクスポート</button>
+      <button class="btn btn-ghost" onclick="importData()">⬆ データインポート</button>
+      <button class="btn btn-danger" onclick="if(confirm('全データをリセットしますか？'))resetData()">🗑 データリセット</button>
+    </div>
+  </div>
+</div>
+
+</div></main></div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- 期日編集モーダル -->
+<div class="overlay" id="edit-kj-modal" onclick="if(event.target===this)closeModal('edit-kj-modal')">
+  <div class="modal" style="max-width:500px;">
+    <div class="mh"><div class="mt">✏️ 期日情報を編集</div><button class="mc" onclick="closeModal('edit-kj-modal')">✕</button></div>
+    <div class="mb">
+      <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.95rem;padding:.55rem .75rem;background:var(--tp);border-radius:6px;">
+        <span id="edit-kj-badge" class="badge"></span>
+        <span id="edit-kj-name" style="font-weight:700;font-size:.88rem;"></span>
+        <span id="edit-kj-dob" style="font-size:.7rem;color:var(--mu);"></span>
+      </div>
+      <div class="alert ai" style="font-size:.73rem;margin-bottom:.9rem;">💡 入力形式：<strong>R8.930</strong>（令和8年9月30日）・<strong>期限なし</strong>・<strong>申請中</strong> など自由入力可</div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">受給者証</label><input class="fi" id="ef-0" placeholder="例：R8.930"></div>
+        <div class="fg"><label class="fl">障害者手帳</label><input class="fi" id="ef-1" placeholder="例：R9.1130"></div>
+        <div class="fg"><label class="fl">自立支援医療受給者証</label><input class="fi" id="ef-2" placeholder="例：R8.731 / 申請中"></div>
+        <div class="fg"><label class="fl">重度心身障害者医療費受給者証</label><input class="fi" id="ef-3" placeholder="例：R8.930 / 無"></div>
+        <div class="fg"><label class="fl">生保受給証</label><input class="fi" id="ef-4" placeholder="例：R8.331"></div>
+        <div class="fg"><label class="fl">備考</label><input class="fi" id="ef-5" placeholder="例：更新手続き中"></div>
+      </div>
+      <!-- 利用者基本情報編集 -->
+      <div style="border-top:1px solid var(--ln);padding-top:.8rem;margin-top:.2rem;">
+        <div style="font-size:.66rem;font-weight:700;color:var(--mu);margin-bottom:.5rem;letter-spacing:.04em;">基本情報</div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">氏名</label><input class="fi" id="ef-name" placeholder="氏名"></div>
+          <div class="fg"><label class="fl">生年月日</label><input class="fi" id="ef-dob" placeholder="例：1975/3/26"></div>
+          <div class="fg"><label class="fl">事業所</label>
+            <select class="fi fsel" id="ef-fac">
+              <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteResident()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('edit-kj-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveKjEdit()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 利用者追加モーダル -->
+<div class="overlay" id="add-resident-modal" onclick="if(event.target===this)closeModal('add-resident-modal')">
+  <div class="modal" style="max-width:500px;">
+    <div class="mh"><div class="mt">＋ 利用者を追加</div><button class="mc" onclick="closeModal('add-resident-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">事業所</label>
+          <select class="fi fsel" id="ar-fac">
+            <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">氏名</label><input class="fi" id="ar-name" placeholder="例：田中 太郎"></div>
+        <div class="fg"><label class="fl">生年月日</label><input class="fi" id="ar-dob" placeholder="例：1985/4/15"></div>
+      </div>
+      <div class="alert ai" style="font-size:.73rem;">💡 追加後、編集ボタンから期日情報を入力してください。</div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('add-resident-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveNewResident()">✓ 追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ヒヤリハット編集モーダル -->
+<div class="overlay" id="hiyari-edit-modal" onclick="if(event.target===this)closeModal('hiyari-edit-modal')">
+  <div class="modal">
+    <div class="mh"><div class="mt" id="hiyari-modal-title">✏️ ヒヤリハット編集</div><button class="mc" onclick="closeModal('hiyari-edit-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr3">
+        <div class="fg"><label class="fl">発生日時</label><input class="fi" id="he-dt"></div>
+        <div class="fg"><label class="fl">事業所</label><select class="fi fsel" id="he-fac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option></select></div>
+        <div class="fg"><label class="fl">報告者</label><input class="fi" id="he-reporter" placeholder="氏名"></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">種別</label><select class="fi fsel" id="he-type"><option>転倒・転落</option><option>服薬関連</option><option>声かけ・対応</option><option>外出・離棟</option><option>誤嚥・窒息</option><option>事故（怪我あり）</option><option>その他</option></select></div>
+        <div class="fg"><label class="fl">対象者</label><input class="fi" id="he-person" placeholder="利用者名"></div>
+      </div>
+      <div class="fg"><label class="fl">状況の説明</label><textarea class="fi fta" id="he-desc"></textarea></div>
+      <div class="fg"><label class="fl">原因</label><textarea class="fi fta" id="he-cause"></textarea></div>
+      <div class="fg"><label class="fl">とった対応</label><textarea class="fi fta" id="he-action"></textarea></div>
+      <div class="fg"><label class="fl">再発防止</label><textarea class="fi fta" id="he-prevention"></textarea></div>
+      <div class="fg"><label class="fl">処理状態</label>
+        <select class="fi fsel" id="he-status">
+          <option>未処理</option><option>確認中</option><option>処理済</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteHiyari()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('hiyari-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveHiyariEdit()">✓ 保存する</button>
+    </div>
+    <input type="hidden" id="he-idx">
+  </div>
+</div>
+
+<!-- 会議編集モーダル -->
+<div class="overlay" id="meeting-edit-modal" onclick="if(event.target===this)closeModal('meeting-edit-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt">✏️ 会議情報を編集</div><button class="mc" onclick="closeModal('meeting-edit-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">会議名</label><input class="fi" id="me-mname" placeholder="例：虐待防止委員会（第3回）"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">事業所</label><select class="fi fsel" id="me-mfac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option><option>全事業所合同</option></select></div>
+        <div class="fg"><label class="fl">確認期限</label><input class="fi" id="me-mdeadline" placeholder="例：04/15"></div>
+      </div>
+      <div class="fg"><label class="fl">ステータス</label><select class="fi fsel" id="me-mstatus"><option>進行中</option><option>完了</option><option>準備中</option></select></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteMeeting()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('meeting-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveMeetingEdit()">✓ 保存する</button>
+    </div>
+    <input type="hidden" id="me-midx">
+  </div>
+</div>
+
+<!-- アーカイブ編集モーダル -->
+<div class="overlay" id="archive-edit-modal" onclick="if(event.target===this)closeModal('archive-edit-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt" id="archive-modal-title">✏️ アーカイブを編集</div><button class="mc" onclick="closeModal('archive-edit-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">種別</label><select class="fi fsel" id="ae-type"><option>虐待防止</option><option>感染対策</option><option>身体拘束</option><option>個別支援</option><option>その他</option></select></div>
+      <div class="fg"><label class="fl">会議名</label><input class="fi" id="ae-name" placeholder="例：第2回（2026年度）"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">事業所</label><select class="fi fsel" id="ae-fac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option><option>全事業所</option></select></div>
+        <div class="fg"><label class="fl">生成日</label><input class="fi" id="ae-date" placeholder="例：2026/04/10"></div>
+      </div>
+      <div class="fg"><label class="fl">ステータス</label><select class="fi fsel" id="ae-status"><option>完了</option><option>作成中</option></select></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteArchive()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('archive-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveArchiveEdit()">✓ 保存する</button>
+    </div>
+    <input type="hidden" id="ae-idx">
+  </div>
+</div>
+
+<!-- 加算項目編集モーダル -->
+<div class="overlay" id="kasan-edit-modal" onclick="if(event.target===this)closeModal('kasan-edit-modal')">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh"><div class="mt" id="kasan-modal-title">✏️ 加算項目を編集</div><button class="mc" onclick="closeModal('kasan-edit-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">加算名</label><input class="fi" id="ke-name"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">増収額</label><input class="fi" id="ke-amount" placeholder="例：+¥54/日・人"></div>
+        <div class="fg"><label class="fl">ステータス</label><select class="fi fsel" id="ke-status"><option>未取得</option><option>要確認</option><option>取得済</option><option>対応中</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">内容・対応方法</label><textarea class="fi fta" id="ke-note"></textarea></div>
+      <div class="fg"><label class="fl">担当者メモ</label><textarea class="fi fta" id="ke-usernote" placeholder="社内メモ・担当者・期日など..."></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteKasan()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('kasan-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveKasanEdit()">✓ 保存する</button>
+    </div>
+    <input type="hidden" id="ke-idx">
+  </div>
+</div>
+
+<!-- 議事録メタ編集モーダル -->
+<div class="overlay" id="minutes-meta-modal" onclick="if(event.target===this)closeModal('minutes-meta-modal')">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><div class="mt">✏️ 情報を編集</div><button class="mc" onclick="closeModal('minutes-meta-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl" id="mm-label">項目</label><input class="fi" id="mm-value"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('minutes-meta-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveMinutesMeta()">✓ 保存</button>
+    </div>
+    <input type="hidden" id="mm-idx">
+  </div>
+</div>
+
+<!-- ホームアラート編集モーダル -->
+<div class="overlay" id="home-alert-modal" onclick="if(event.target===this)closeModal('home-alert-modal')">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh"><div class="mt">✏️ アラートを編集</div><button class="mc" onclick="closeModal('home-alert-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">アラートテキスト</label><textarea class="fi fta" id="ha-text" style="min-height:80px;"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('home-alert-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveHomeAlert()">✓ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- アクティビティ追加モーダル -->
+<div class="overlay" id="activity-modal" onclick="if(event.target===this)closeModal('activity-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt">＋ アクティビティを追加</div><button class="mc" onclick="closeModal('activity-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">日時</label><input class="fi" id="act-dt" placeholder="例：03/08 09:00"></div>
+        <div class="fg"><label class="fl">種別</label><select class="fi fsel" id="act-type"><option value="w">⚠ 警告</option><option value="g">✓ 完了</option><option value="">ℹ 情報</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">内容</label><input class="fi" id="act-text" placeholder="アクティビティの内容"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('activity-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveActivity()">✓ 追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- スタッフ追加・編集モーダル -->
+<div class="overlay" id="staff-modal" onclick="if(event.target===this)closeModal('staff-modal')">
+  <div class="modal">
+    <div class="mh"><div class="mt" id="staff-modal-title">＋ スタッフを追加</div><button class="mc" onclick="closeModal('staff-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">氏名</label><input class="fi" id="sf-name" placeholder="例：田中 花子"></div>
+        <div class="fg"><label class="fl">事業所</label>
+          <select class="fi fsel" id="sf-fac">
+            <option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">役職</label>
+          <select class="fi fsel" id="sf-role"><option>管理者</option><option>サービス管理責任者</option><option>世話人</option><option>生活支援員</option><option>夜間支援員</option><option>補助員</option><option>その他</option></select>
+        </div>
+        <div class="fg"><label class="fl">雇用形態</label>
+          <select class="fi fsel" id="sf-emp"><option>常勤</option><option>非常勤</option><option>登録（応援）</option></select>
+        </div>
+        <div class="fg"><label class="fl">担当シフト</label>
+          <select class="fi fsel" id="sf-shift"><option>日勤</option><option>早番</option><option>遅番</option><option>夜勤</option><option>夜勤専従</option><option>日勤・早番</option><option>日勤・遅番</option><option>応援・休日</option></select>
+        </div>
+        <div class="fg"><label class="fl">保有資格（任意）</label><input class="fi" id="sf-cert" placeholder="例：社会福祉士、介護福祉士"></div>
+      </div>
+      <div class="fg"><label class="fl">備考（任意）</label><input class="fi" id="sf-note" placeholder="例：育児時短勤務中 / 管理者兼務可"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('staff-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveStaffEntry()">✓ 保存する</button>
+      <input type="hidden" id="sf-edit-idx" value="">
+    </div>
+  </div>
+</div>
+
+<!-- 経営データ編集モーダル -->
+<div class="overlay" id="keiei-edit-modal" onclick="if(event.target===this)closeModal('keiei-edit-modal')">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh"><div class="mt">✏️ 経営データ編集</div><button class="mc" onclick="closeModal('keiei-edit-modal')">✕</button></div>
+    <div class="mb">
+      <div style="font-weight:700;font-size:.88rem;margin-bottom:.75rem;padding:.4rem .6rem;background:var(--tp);border-radius:5px;" id="ke-fac-name"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">定員（名）</label><input class="fi" id="ke-capacity" type="number" min="1"></div>
+        <div class="fg"><label class="fl">入居者数（名）</label><input class="fi" id="ke-residents" type="number" min="0"></div>
+      </div>
+      <div class="fg"><label class="fl">月間人件費（円）</label><input class="fi" id="ke-staffcost" type="number" min="0"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('keiei-edit-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveKeieiEdit()">✓ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 利用者詳細モーダル -->
+<div class="overlay" id="resident-detail-modal" onclick="if(event.target===this)closeModal('resident-detail-modal')">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh">
+      <div>
+        <div class="mt" id="rd-name">利用者詳細</div>
+        <div style="font-size:.7rem;color:var(--mu);" id="rd-fac"></div>
+      </div>
+      <button class="mc" onclick="closeModal('resident-detail-modal')">✕</button>
+    </div>
+    <div class="mb" style="padding-top:.5rem;">
+      <div class="tabs" style="margin-bottom:.75rem;">
+        <button class="tab active" id="rd-tab-basic" onclick="switchResTab('basic',this)">基本情報</button>
+        <button class="tab" id="rd-tab-med" onclick="switchResTab('med',this)">服薬管理</button>
+        <button class="tab" id="rd-tab-finance" onclick="switchResTab('finance',this)">金銭管理</button>
+        <button class="tab" id="rd-tab-plan" onclick="switchResTab('plan',this)">支援計画</button>
+      </div>
+      <div id="rd-tab-content-basic">
+        <div class="fr2">
+          <div class="fg"><label class="fl">障害種別</label>
+            <select class="fi fsel" id="rd-disability">
+              <option value="">未設定</option><option>知的障害</option><option>精神障害</option><option>身体障害</option><option>重複障害（知的＋精神）</option><option>重複障害（知的＋身体）</option><option>高次脳機能障害</option><option>発達障害</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">障害支援区分</label>
+            <select class="fi fsel" id="rd-level">
+              <option value="">未設定</option><option value="1">区分1</option><option value="2">区分2</option><option value="3">区分3</option><option value="4">区分4</option><option value="5">区分5</option><option value="6">区分6</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="rd-tab-content-med" style="display:none;">
+        <div id="rd-med-list" style="margin-bottom:.75rem;"></div>
+        <div style="background:var(--tp);border-radius:6px;padding:.7rem;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--mu);margin-bottom:.5rem;">＋ 服薬を追加</div>
+          <div class="fr2">
+            <div class="fg"><label class="fl">薬品名</label><input class="fi" id="rd-med-name" placeholder="例：リスペリドン"></div>
+            <div class="fg"><label class="fl">用量</label><input class="fi" id="rd-med-dose" placeholder="例：1mg"></div>
+          </div>
+          <div class="fr2">
+            <div class="fg"><label class="fl">服用タイミング</label>
+              <select class="fi fsel" id="rd-med-timing"><option>朝食後</option><option>昼食後</option><option>夕食後</option><option>就寝前</option><option>朝・夕食後</option><option>毎食後</option><option>頓服</option></select>
+            </div>
+            <div class="fg"><label class="fl">備考</label><input class="fi" id="rd-med-note" placeholder="例：粉砕可"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addMed()">＋ 追加</button>
+        </div>
+      </div>
+      <div id="rd-tab-content-finance" style="display:none;">
+        <div class="fr2">
+          <div class="fg"><label class="fl">預り金残高（円）</label><input class="fi" id="rd-finance-balance" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">今月の収入（円）</label><input class="fi" id="rd-finance-income" type="number" placeholder="0"></div>
+        </div>
+        <div class="fr2">
+          <div class="fg"><label class="fl">今月の支出（円）</label><input class="fi" id="rd-finance-expense" type="number" placeholder="0"></div>
+          <div class="fg"><label class="fl">備考</label><input class="fi" id="rd-finance-note" placeholder="例：生活保護受給中"></div>
+        </div>
+      </div>
+      <div id="rd-tab-content-plan" style="display:none;">
+        <div class="fr2">
+          <div class="fg"><label class="fl">個別支援計画 次回更新日</label><input class="fi" type="date" id="rd-plan-next"></div>
+          <div class="fg"><label class="fl">モニタリング予定日</label><input class="fi" type="date" id="rd-plan-monitor"></div>
+        </div>
+        <div class="alert ai" style="font-size:.74rem;">💡 6ヶ月以内のモニタリングが義務です。更新日の90日前からアラートが表示されます。</div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('resident-detail-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveResidentDetail()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 日誌追加・編集モーダル -->
+<div class="overlay" id="diary-add-modal" onclick="if(event.target===this)closeModal('diary-add-modal')">
+  <div class="modal">
+    <div class="mh"><div class="mt" id="diary-modal-title">＋ 記録を追加</div><button class="mc" onclick="closeModal('diary-add-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr3">
+        <div class="fg"><label class="fl">日時</label><input class="fi" type="datetime-local" id="da-dt"></div>
+        <div class="fg"><label class="fl">事業所</label><select class="fi fsel" id="da-fac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option></select></div>
+        <div class="fg"><label class="fl">種別</label><select class="fi fsel" id="da-type" onchange="toggleVitalFields()"><option>申し送り</option><option>バイタル</option><option>服薬確認</option><option>食事</option><option>日誌</option><option>その他</option></select></div>
+      </div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">対象者（任意）</label><input class="fi" id="da-person" placeholder="利用者名"></div>
+        <div class="fg"><label class="fl">記録者</label><input class="fi" id="da-recorder" placeholder="スタッフ名"></div>
+      </div>
+      <div id="da-vital-wrap" style="display:none;">
+        <div class="fr3">
+          <div class="fg"><label class="fl">体温（℃）</label><input class="fi" id="da-temp" placeholder="36.5" type="number" step="0.1"></div>
+          <div class="fg"><label class="fl">血圧（mmHg）</label><input class="fi" id="da-bp" placeholder="120/80"></div>
+          <div class="fg"><label class="fl">脈拍（回/分）</label><input class="fi" id="da-pulse" placeholder="72" type="number"></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">内容</label><textarea class="fi fta" id="da-content" style="min-height:80px;"></textarea></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" id="da-delete-btn" onclick="deleteDiaryEntry()" style="margin-right:auto;display:none;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('diary-add-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveDiaryEntry()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- BCP緊急連絡先モーダル -->
+<div class="overlay" id="bcp-contact-modal" onclick="if(event.target===this)closeModal('bcp-contact-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt" id="bcp-contact-modal-title">＋ 緊急連絡先を追加</div><button class="mc" onclick="closeModal('bcp-contact-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fr2">
+        <div class="fg"><label class="fl">役職・種別</label><input class="fi" id="bc-role" placeholder="例：施設長"></div>
+        <div class="fg"><label class="fl">氏名・法人名</label><input class="fi" id="bc-name" placeholder="例：田中 太郎"></div>
+        <div class="fg"><label class="fl">電話番号</label><input class="fi" id="bc-tel" placeholder="090-XXXX-XXXX" type="tel"></div>
+        <div class="fg"><label class="fl">担当事業所</label><input class="fi" id="bc-fac" placeholder="例：全事業所"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" onclick="deleteBcpContact()" style="margin-right:auto;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('bcp-contact-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveBcpContact()">✓ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- BCP避難場所編集モーダル -->
+<div class="overlay" id="bcp-shelter-modal" onclick="if(event.target===this)closeModal('bcp-shelter-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt">✏️ 避難場所を編集</div><button class="mc" onclick="closeModal('bcp-shelter-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">事業所</label>
+        <select class="fi fsel" id="bs-fac"><option>梅田本町</option><option>大沼</option><option>西金野井①</option><option>西金野井②</option><option>藤塚</option><option>牛島</option><option>南中曾根</option><option>西金野井③</option></select>
+      </div>
+      <div class="fg"><label class="fl">避難場所名</label><input class="fi" id="bs-shelter"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">距離・時間</label><input class="fi" id="bs-dist" placeholder="例：徒歩5分"></div>
+        <div class="fg"><label class="fl">備考</label><input class="fi" id="bs-note" placeholder="例：車椅子対応可"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('bcp-shelter-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveBcpShelter()">✓ 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 棟追加・編集モーダル -->
+<div class="overlay" id="add-facility-modal" onclick="if(event.target===this)closeModal('add-facility-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt" id="add-fac-modal-title">＋ 棟を追加</div><button class="mc" onclick="closeModal('add-facility-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">棟名・事業所名</label><input class="fi" id="af-name" placeholder="例：西金野井④"></div>
+      <div class="fr3">
+        <div class="fg"><label class="fl">定員（名）</label><input class="fi" id="af-capacity" type="number" min="1" value="4"></div>
+        <div class="fg"><label class="fl">入居者数（名）</label><input class="fi" id="af-residents" type="number" min="0" value="0"></div>
+        <div class="fg"><label class="fl">月間人件費（円）</label><input class="fi" id="af-staffcost" type="number" min="0" value="320000"></div>
+      </div>
+      <div class="alert ai" style="font-size:.73rem;">💡 追加後、期日管理・利用者管理・各種ドロップダウンに自動反映されます。</div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-danger" id="af-delete-btn" onclick="deleteFacility()" style="margin-right:auto;display:none;">🗑 削除</button>
+      <button class="btn btn-ghost" onclick="closeModal('add-facility-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveNewFacility()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 月次データ追加モーダル -->
+<div class="overlay" id="add-monthly-modal" onclick="if(event.target===this)closeModal('add-monthly-modal')">
+  <div class="modal" style="max-width:440px;">
+    <div class="mh"><div class="mt">＋ 月次収入データを追加</div><button class="mc" onclick="closeModal('add-monthly-modal')">✕</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">対象月（YYYY-MM）</label><input class="fi" id="am-month" placeholder="例：2026-03"></div>
+      <div class="fr2">
+        <div class="fg"><label class="fl">国保連入金（円）</label><input class="fi" id="am-koboren" type="number" min="0" placeholder="例：8452130"></div>
+        <div class="fg"><label class="fl">実費収入（円）</label><input class="fi" id="am-jippi" type="number" min="0" placeholder="例：2587451"></div>
+      </div>
+      <div class="fg"><label class="fl">処遇改善加算（円・国保連入金の内数）</label><input class="fi" id="am-shochu" type="number" min="0" placeholder="例：1040302"></div>
+      <div class="fg"><label class="fl">メモ</label><input class="fi" id="am-memo" placeholder="例：4/15入金確定"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('add-monthly-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveMonthlyData()">✓ 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 共通モーダル -->
+<div class="overlay" id="remind-modal" onclick="if(event.target===this)closeModal('remind-modal')">
+  <div class="modal">
+    <div class="mh"><div class="mt">📣 リマインド送信</div><button class="mc" onclick="closeModal('remind-modal')">✕</button></div>
+    <div class="mb">
+      <div class="alert aw" style="margin-bottom:.8rem;">未確認スタッフへリマインドを送信します</div>
+      <div class="fg"><label class="fl">通知メッセージ</label><textarea class="fi fta">【確認のお願い】会議資料の確認がまだ完了していません。期限までにご確認・署名をお願いします。—株式会社COCON</textarea></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('remind-modal')">キャンセル</button><button class="btn btn-primary" onclick="showSuccess('リマインドを送信しました','対象スタッフに通知を送信しました。');closeModal('remind-modal')">📣 送信</button></div>
+  </div>
+</div>
+<div class="overlay" id="success-modal" onclick="if(event.target===this)closeModal('success-modal')">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh"><div class="mt">完了</div><button class="mc" onclick="closeModal('success-modal')">✕</button></div>
+    <div class="mb" style="text-align:center;padding:1.75rem 1.3rem;">
+      <div style="font-size:2.2rem;margin-bottom:.65rem;">✅</div>
+      <div style="font-size:.92rem;font-weight:700;margin-bottom:.35rem;" id="suc-title"></div>
+      <div style="font-size:.78rem;color:var(--mu);" id="suc-body"></div>
+    </div>
+    <div class="mf"><button class="btn btn-primary" onclick="closeModal('success-modal')">閉じる</button></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+// ══════════════════════════════
+// Supabase + safeStorage
+// ══════════════════════════════
+// デフォルト接続情報（設定画面で上書き可）
+const _SB_DEFAULT_URL='https://lvznnctbgojsfoaytyio.supabase.co';
+const _SB_DEFAULT_KEY='sb_publishable_Og92JvF18YsMuTlq1TjOEg_h6L4WIko';
+let _sb=null;
+function getSb(){
+  if(_sb)return _sb;
+  const url=localStorage.getItem('cocon-sb-url')||_SB_DEFAULT_URL;
+  const key=localStorage.getItem('cocon-sb-anon')||_SB_DEFAULT_KEY;
+  if(url&&key&&window.supabase){_sb=window.supabase.createClient(url,key);}
+  return _sb;
+}
+function setSyncStatus(s){
+  const el=document.getElementById('sync-dot');
+  if(!el)return;
+  const icons={ok:'🟢',sync:'🟡',err:'🔴',off:'⚫'};
+  const labels={ok:'Supabase接続中・同期済み',sync:'同期中...',err:'接続エラー（設定を確認）',off:'ローカルのみ（設定 > Supabase）'};
+  el.textContent=icons[s]||'⚫';
+  el.title=labels[s]||'';
+}
+const safeStorage={
+  async get(key){
+    const sb=getSb();
+    if(sb){
+      try{
+        const{data,error}=await sb.from('app_data').select('value').eq('key',key).single();
+        if(!error&&data){
+          try{localStorage.setItem(key,JSON.stringify(data.value));}catch(e){}
+          return{value:JSON.stringify(data.value)};
+        }
+      }catch(e){}
+    }
+    try{const v=localStorage.getItem(key);return v?{value:v}:null;}catch(e){return null;}
+  },
+  async set(key,val){
+    try{localStorage.setItem(key,val);}catch(e){}
+    const sb=getSb();
+    if(sb){
+      setSyncStatus('sync');
+      try{
+        const value=typeof val==='string'?JSON.parse(val):val;
+        const{error}=await sb.from('app_data').upsert({key,value,updated_at:new Date().toISOString()},{onConflict:'key'});
+        setSyncStatus(error?'err':'ok');
+      }catch(e){setSyncStatus('err');}
+    }
+  }
+};
+function getApiKey(){return localStorage.getItem('cocon-api-key')||'';}
+
+// ══════════════════════════════
+// 新機能データ
+// ══════════════════════════════
+let KEIEI_DATA={
+  month:'2026-04',
+  unitPrice:18000,
+  daysInMonth:30,
+  monthlyRevPerResident:306655,
+  monthlyActual:{
+    '2026-03':{
+      koboren:8452130,
+      jippi:2587451,
+      shoryoKaizen:1040302,
+      total:11039581,
+      memo:'国保連入金4/15確定。処遇改善加算¥1,040,302は国保連入金の内数（職員賃金原資）。実費は36名分。'
+    }
+  },
+  payroll:{
+    '2026-04':{
+      count:29,
+      gross:5225055,
+      deduction:653052,
+      net:4572003,
+      memo:'令和8年4月分（4/10支給）。29名分。処遇改善手当含む。'
+    }
+  },
+  facilities:[
+    {name:'梅田本町',capacity:6,residents:6,staffCost:870842},
+    {name:'大沼',capacity:4,residents:4,staffCost:580562},
+    {name:'西金野井①',capacity:7,residents:7,staffCost:1015983},
+    {name:'西金野井②',capacity:5,residents:5,staffCost:725702},
+    {name:'藤塚',capacity:4,residents:4,staffCost:580562},
+    {name:'牛島',capacity:4,residents:4,staffCost:580562},
+    {name:'南中曾根',capacity:4,residents:4,staffCost:580562},
+    {name:'西金野井③',capacity:2,residents:2,staffCost:290280},
+  ]
+};
+let DIARY=[
+  {dt:'2026/04/15 07:30',fac:'梅田本町',type:'申し送り',person:'',recorder:'田中',content:'夜間、小笠原さんがトイレに2回起床。転倒なし。服薬は全員完了。',vital:{},status:'通常'},
+  {dt:'2026/04/15 08:00',fac:'大沼',type:'バイタル',person:'海老名',recorder:'鈴木',content:'朝のバイタル測定。体温36.2、血圧128/82、脈拍72。異常なし。',vital:{temp:'36.2',bp:'128/82',pulse:'72'},status:'通常'},
+  {dt:'2026/04/14 19:00',fac:'西金野井①',type:'服薬確認',person:'坂口',recorder:'山田',content:'夕食後服薬確認。全量服用済み。',vital:{},status:'通常'},
+];
+let RESIDENTS_DETAIL={};
+let BCP_CONTACTS=[
+  {role:'施設長',name:'（未設定）',tel:'',fac:'全事業所'},
+  {role:'サービス管理責任者①',name:'（未設定）',tel:'',fac:''},
+  {role:'サービス管理責任者②',name:'（未設定）',tel:'',fac:''},
+  {role:'緊急連絡（法人本部）',name:'株式会社COCON',tel:'',fac:'全事業所'},
+];
+let BCP_SHELTERS=[
+  {fac:'梅田本町',shelter:'春日部市立梅田小学校',dist:'徒歩5分',note:''},
+  {fac:'大沼',shelter:'春日部市立大沼小学校',dist:'徒歩8分',note:''},
+  {fac:'西金野井①',shelter:'春日部市立西金野井小学校',dist:'徒歩6分',note:''},
+  {fac:'西金野井②',shelter:'春日部市立西金野井小学校',dist:'徒歩8分',note:''},
+  {fac:'藤塚',shelter:'春日部市立藤塚小学校',dist:'徒歩7分',note:''},
+  {fac:'牛島',shelter:'春日部市立牛島小学校',dist:'徒歩10分',note:''},
+  {fac:'南中曾根',shelter:'春日部市立南中曾根小学校',dist:'徒歩6分',note:''},
+  {fac:'西金野井③',shelter:'春日部市立西金野井小学校',dist:'徒歩5分',note:''},
+];
+let bcpCheckState={};
+let editBcpContactIdx=null;
+let editBcpShelterIdx=null;
+let editKeieiIdx=null;
+let editDiaryIdx=null;
+let currentResidentIdx=null;
+let currentResidentTab='basic';
+
+// ══════════════════════════════
+// 経営ダッシュボード
+// ══════════════════════════════
+function renderKeiei(){
+  const facs=KEIEI_DATA.facilities;
+  const totalRes=facs.reduce((s,f)=>s+f.residents,0);
+  const totalCap=facs.reduce((s,f)=>s+f.capacity,0);
+  const totalCost=facs.reduce((s,f)=>s+f.staffCost,0);
+  const revenue=KEIEI_DATA.monthlyRevPerResident*totalRes;
+  const occRate=totalCap>0?Math.round(totalRes/totalCap*100):0;
+  const laborRate=revenue>0?Math.round(totalCost/revenue*100):0;
+  const vacant=totalCap-totalRes;
+  const stats=document.getElementById('keiei-stats');
+  if(stats)stats.innerHTML=`
+    <div class="stat g"><div class="sv">${occRate}%</div><div class="sl">全体稼働率</div></div>
+    <div class="stat"><div class="sv" style="font-size:1.1rem;">¥${Math.round(revenue/10000)}万</div><div class="sl">月間売上見込み</div></div>
+    <div class="stat ${laborRate>70?'d':laborRate>60?'w':'g'}"><div class="sv">${laborRate}%</div><div class="sl">人件費率</div></div>
+    <div class="stat ${vacant>0?'w':'g'}"><div class="sv">${vacant}</div><div class="sl">空床数</div></div>`;
+  const tbody=document.getElementById('keiei-tbody');
+  if(tbody)tbody.innerHTML=facs.map((f,i)=>{
+    const rev=KEIEI_DATA.monthlyRevPerResident*f.residents;
+    const occ=f.capacity>0?Math.round(f.residents/f.capacity*100):0;
+    const lr=rev>0?Math.round(f.staffCost/rev*100):0;
+    return `<tr>
+      <td><span class="badge ${FAC_CLS[f.name]||'bx'}">${f.name}</span></td>
+      <td style="text-align:center;">${f.capacity}</td>
+      <td style="text-align:center;font-weight:700;">${f.residents}</td>
+      <td style="text-align:center;"><span style="color:${occ>=95?'var(--gn)':occ>=80?'var(--am)':'var(--rd)'};font-weight:700;">${occ}%</span></td>
+      <td style="text-align:right;">¥${Math.round(rev/10000)}万</td>
+      <td style="text-align:center;"><span style="color:${lr>70?'var(--rd)':lr>60?'var(--am)':'var(--gn)'};font-weight:700;">${lr}%</span></td>
+      <td class="no-print"><div style="display:flex;gap:.22rem;"><button onclick="openKeieiEditModal(${i})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.62rem;color:var(--teal);">✏️</button><button onclick="openAddFacilityModal(${i})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.62rem;color:var(--mu);">棟編集</button></div></td>
+    </tr>`;
+  }).join('');
+  const ml=document.getElementById('keiei-month-label');
+  if(ml)ml.textContent=KEIEI_DATA.month+' 見込み';
+  const or=document.getElementById('keiei-occ-rate');
+  if(or)or.textContent=occRate+'%';
+  const lr2=document.getElementById('keiei-labor-rate');
+  if(lr2)lr2.textContent=laborRate+'%';
+  // 給与・人件費実績
+  const pc=document.getElementById('keiei-payroll-card');
+  if(pc){
+    const pr=KEIEI_DATA.payroll||{};
+    const pkeys=Object.keys(pr).sort().reverse();
+    if(pkeys.length===0){
+      pc.innerHTML='<div class="alert ai" style="font-size:.76rem;">💡 給与明細データがありません。</div>';
+    } else {
+      let ph='';
+      pkeys.slice(0,3).forEach(pk=>{
+        const d=pr[pk];
+        const laborRateActual=revenue>0?Math.round(d.gross/revenue*100):0;
+        ph+=`<div style="border:1px solid var(--ln);border-radius:6px;padding:.75rem 1rem;margin-bottom:.65rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+            <span style="font-size:.74rem;font-weight:700;color:var(--mu);">${pk} 給与支給（${d.count}名）</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.5rem;">
+            <div style="text-align:center;padding:.4rem;background:var(--tp);border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">支給総額</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;color:var(--teal);">¥${(d.gross/10000).toFixed(1)}万</div>
+              <div style="font-size:.54rem;color:var(--mu);">控除前・税込</div>
+            </div>
+            <div style="text-align:center;padding:.4rem;background:#fff3f3;border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">控除合計</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;color:var(--rd);">¥${(d.deduction/10000).toFixed(1)}万</div>
+              <div style="font-size:.54rem;color:var(--mu);">社保・税金</div>
+            </div>
+            <div style="text-align:center;padding:.4rem;background:var(--gp);border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">振込支給総額</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;color:var(--gn);">¥${(d.net/10000).toFixed(1)}万</div>
+              <div style="font-size:.54rem;color:var(--mu);">人件費率 ${laborRateActual}%</div>
+            </div>
+          </div>
+          ${d.memo?`<div style="font-size:.68rem;color:var(--mu);padding:.3rem .5rem;background:#fafaf8;border-radius:4px;">💡 ${d.memo}</div>`:''}
+        </div>`;
+      });
+      pc.innerHTML=ph;
+    }
+  }
+  // 月次収入実績
+  const mc=document.getElementById('keiei-monthly-card');
+  if(mc){
+    const ma=KEIEI_DATA.monthlyActual||{};
+    const mkeys=Object.keys(ma).sort().reverse();
+    if(mkeys.length===0){
+      mc.innerHTML='<div class="alert ai" style="font-size:.76rem;">💡 「＋ 月次データ」ボタンから実績を登録できます。</div><div style="display:flex;justify-content:flex-end;margin-top:.5rem;"><button class="btn btn-ghost btn-sm" onclick="openAddMonthlyModal()">＋ 月次データを追加</button></div>';
+    } else {
+      let h='';
+      mkeys.slice(0,3).forEach(mk=>{
+        const d=ma[mk];
+        h+=`<div style="border:1px solid var(--ln);border-radius:6px;padding:.75rem 1rem;margin-bottom:.65rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+            <span style="font-size:.74rem;font-weight:700;color:var(--mu);">${mk} 実績確定</span>
+            <button onclick="deleteMonthlyData('${mk}')" style="background:none;border:none;cursor:pointer;font-size:.62rem;color:var(--rd);">✕ 削除</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.5rem;">
+            <div style="text-align:center;padding:.4rem;background:var(--tp);border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">国保連入金</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;color:var(--teal);">¥${(d.koboren/10000).toFixed(1)}万</div>
+              <div style="font-size:.54rem;color:var(--mu);">処遇改善 ¥${Math.round(d.shoryoKaizen/10000)}万含</div>
+            </div>
+            <div style="text-align:center;padding:.4rem;background:var(--gp);border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">実費収入</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;color:var(--gn);">¥${(d.jippi/10000).toFixed(1)}万</div>
+              <div style="font-size:.54rem;color:var(--mu);">食費・光熱費等</div>
+            </div>
+            <div style="text-align:center;padding:.4rem;background:#f3f0e9;border-radius:5px;">
+              <div style="font-size:.56rem;color:var(--mu);">総収入</div>
+              <div style="font-family:'Lexend',sans-serif;font-size:.95rem;font-weight:700;">¥${(d.total/10000).toFixed(1)}万</div>
+            </div>
+          </div>
+          ${d.memo?`<div style="font-size:.68rem;color:var(--mu);padding:.3rem .5rem;background:#fafaf8;border-radius:4px;">💡 ${d.memo}</div>`:''}
+        </div>`;
+      });
+      h+=`<div style="display:flex;justify-content:flex-end;"><button class="btn btn-ghost btn-sm" onclick="openAddMonthlyModal()">＋ 月次データを追加</button></div>`;
+      mc.innerHTML=h;
+    }
+  }
+}
+function openKeieiEditModal(i){
+  editKeieiIdx=i;
+  const f=KEIEI_DATA.facilities[i];
+  document.getElementById('ke-fac-name').textContent=f.name;
+  document.getElementById('ke-capacity').value=f.capacity;
+  document.getElementById('ke-residents').value=f.residents;
+  document.getElementById('ke-staffcost').value=f.staffCost;
+  showModal('keiei-edit-modal');
+}
+function saveKeieiEdit(){
+  const i=editKeieiIdx;
+  KEIEI_DATA.facilities[i].capacity=parseInt(document.getElementById('ke-capacity').value)||0;
+  KEIEI_DATA.facilities[i].residents=parseInt(document.getElementById('ke-residents').value)||0;
+  KEIEI_DATA.facilities[i].staffCost=parseInt(document.getElementById('ke-staffcost').value)||0;
+  closeModal('keiei-edit-modal');
+  renderKeiei();
+  safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+  showSuccess('保存しました','経営データを更新しました。');
+}
+
+// ══════════════════════════════
+// 利用者詳細管理
+// ══════════════════════════════
+function renderResidents(facFilter){
+  const fac=facFilter||'全施設';
+  const rows=(fac==='全施設'?RES:RES.filter(r=>r[0]===fac));
+  const tbody=document.getElementById('res-detail-tbody');
+  if(!tbody)return;
+  tbody.innerHTML=rows.map(r=>{
+    const name=r[1];
+    const d=RESIDENTS_DETAIL[name]||{};
+    const medCount=(d.medications||[]).length;
+    const hasFinance=d.finance&&(d.finance.balance||d.finance.balance===0);
+    const nextUpdate=d.plan&&d.plan.nextUpdate?d.plan.nextUpdate:'未設定';
+    const idx=RES.indexOf(r);
+    return `<tr style="cursor:pointer;" onclick="openResidentDetail(${idx})">
+      <td><span class="badge ${FAC_CLS[r[0]]||'bx'}" style="font-size:.56rem;">${r[0]}</span></td>
+      <td style="font-weight:700;">${name}</td>
+      <td style="font-size:.72rem;">${r[2]||'—'}</td>
+      <td style="font-size:.72rem;">${d.disabilityType||'—'}</td>
+      <td style="text-align:center;">${d.supportLevel?'区分'+d.supportLevel:'—'}</td>
+      <td style="text-align:center;"><span class="badge ${medCount>0?'bt':'bx'}">${medCount>0?medCount+'種':'なし'}</span></td>
+      <td style="text-align:center;"><span class="badge ${hasFinance?'bg':'bx'}">${hasFinance?'管理中':'—'}</span></td>
+      <td style="font-size:.7rem;color:${nextUpdate==='未設定'?'var(--mu)':'var(--ink)'};">${nextUpdate}</td>
+    </tr>`;
+  }).join('');
+}
+function filterResDet(fac,el){
+  document.querySelectorAll('#res-detail-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderResidents(fac);
+}
+function openResidentDetail(idx){
+  currentResidentIdx=idx;
+  const r=RES[idx];
+  const name=r[1];
+  const d=RESIDENTS_DETAIL[name]||{disabilityType:'',supportLevel:'',medications:[],finance:{balance:'',income:'',expense:'',note:''},plan:{nextUpdate:'',monitoring:''}};
+  document.getElementById('rd-name').textContent=name;
+  document.getElementById('rd-fac').textContent=r[0];
+  document.getElementById('rd-tab-basic').click();
+  document.getElementById('rd-disability').value=d.disabilityType||'';
+  document.getElementById('rd-level').value=d.supportLevel||'';
+  document.getElementById('rd-finance-balance').value=d.finance?d.finance.balance||'':'';
+  document.getElementById('rd-finance-income').value=d.finance?d.finance.income||'':'';
+  document.getElementById('rd-finance-expense').value=d.finance?d.finance.expense||'':'';
+  document.getElementById('rd-finance-note').value=d.finance?d.finance.note||'':'';
+  document.getElementById('rd-plan-next').value=d.plan?d.plan.nextUpdate||'':'';
+  document.getElementById('rd-plan-monitor').value=d.plan?d.plan.monitoring||'':'';
+  renderMedList(d.medications||[]);
+  showModal('resident-detail-modal');
+}
+function renderMedList(meds){
+  const el=document.getElementById('rd-med-list');if(!el)return;
+  if(meds.length===0){el.innerHTML='<div style="color:var(--mu);font-size:.76rem;padding:.5rem 0;">服薬情報が登録されていません</div>';return;}
+  el.innerHTML=meds.map((m,i)=>`<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .6rem;background:var(--bg);border-radius:5px;">
+    <div style="flex:1;">
+      <strong style="font-size:.78rem;">${m.name||'—'}</strong>
+      <span style="font-size:.68rem;color:var(--mu);margin-left:.4rem;">${m.dose||''} ${m.timing||''}</span>
+      ${m.note?`<span style="font-size:.66rem;color:var(--am);margin-left:.3rem;">※${m.note}</span>`:''}
+    </div>
+    <button onclick="deleteMed(${i})" style="background:none;border:none;cursor:pointer;color:var(--rd);font-size:.7rem;">✕</button>
+  </div>`).join('');
+}
+function addMed(){
+  const name=document.getElementById('rd-med-name').value.trim();
+  if(!name){alert('薬品名を入力してください');return;}
+  const r=RES[currentResidentIdx];
+  const rname=r[1];
+  if(!RESIDENTS_DETAIL[rname])RESIDENTS_DETAIL[rname]={disabilityType:'',supportLevel:'',medications:[],finance:{},plan:{}};
+  RESIDENTS_DETAIL[rname].medications=RESIDENTS_DETAIL[rname].medications||[];
+  RESIDENTS_DETAIL[rname].medications.push({
+    name,dose:document.getElementById('rd-med-dose').value,
+    timing:document.getElementById('rd-med-timing').value,
+    note:document.getElementById('rd-med-note').value
+  });
+  ['rd-med-name','rd-med-dose','rd-med-note'].forEach(id=>document.getElementById(id).value='');
+  renderMedList(RESIDENTS_DETAIL[rname].medications);
+}
+function deleteMed(i){
+  const rname=RES[currentResidentIdx][1];
+  if(!RESIDENTS_DETAIL[rname])return;
+  RESIDENTS_DETAIL[rname].medications.splice(i,1);
+  renderMedList(RESIDENTS_DETAIL[rname].medications);
+}
+function saveResidentDetail(){
+  const r=RES[currentResidentIdx];
+  const rname=r[1];
+  if(!RESIDENTS_DETAIL[rname])RESIDENTS_DETAIL[rname]={medications:[],finance:{},plan:{}};
+  const d=RESIDENTS_DETAIL[rname];
+  d.disabilityType=document.getElementById('rd-disability').value;
+  d.supportLevel=document.getElementById('rd-level').value;
+  d.finance={
+    balance:document.getElementById('rd-finance-balance').value,
+    income:document.getElementById('rd-finance-income').value,
+    expense:document.getElementById('rd-finance-expense').value,
+    note:document.getElementById('rd-finance-note').value
+  };
+  d.plan={
+    nextUpdate:document.getElementById('rd-plan-next').value,
+    monitoring:document.getElementById('rd-plan-monitor').value
+  };
+  closeModal('resident-detail-modal');
+  renderResidents();
+  safeStorage.set('cocon-residents-detail',JSON.stringify(RESIDENTS_DETAIL));
+  showSuccess('保存しました',`${rname}さんの情報を更新しました。`);
+}
+function switchResTab(tab,el){
+  document.querySelectorAll('#resident-detail-modal .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  ['basic','med','finance','plan'].forEach(t=>{
+    const p=document.getElementById('rd-tab-content-'+t);
+    if(p)p.style.display=t===tab?'block':'none';
+  });
+}
+
+// ══════════════════════════════
+// 日誌・記録
+// ══════════════════════════════
+function renderDiary(typeFilter){
+  const type=typeFilter||'全て';
+  const tbody=document.getElementById('diary-tbody');if(!tbody)return;
+  const fac=document.getElementById('diary-fac-filter')?.value||'';
+  const date=document.getElementById('diary-date-filter')?.value||'';
+  let items=DIARY;
+  if(type!=='全て')items=items.filter(d=>d.type===type);
+  if(fac)items=items.filter(d=>d.fac===fac);
+  if(date)items=items.filter(d=>d.dt.startsWith(date));
+  const TYPE_CLS={'申し送り':'bt','バイタル':'bg','服薬確認':'bp','食事':'ba','日誌':'bx','その他':'bx'};
+  tbody.innerHTML=items.map((d,i)=>`<tr>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:.66rem;white-space:nowrap;">${d.dt}</td>
+    <td><span class="badge ${FAC_CLS[d.fac]||'bx'}" style="font-size:.55rem;">${d.fac}</span></td>
+    <td><span class="badge ${TYPE_CLS[d.type]||'bx'}">${d.type}</span></td>
+    <td style="font-size:.74rem;">${d.person||'—'}</td>
+    <td style="font-size:.74rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${d.content}">${d.content}</td>
+    <td style="font-size:.74rem;">${d.recorder||'—'}</td>
+    <td class="no-print"><button onclick="openDiaryEdit(${DIARY.indexOf(d)})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.6rem;color:var(--teal);">✏️</button></td>
+  </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:1.5rem;">記録がありません</td></tr>';
+}
+function filterDiary(type,el){
+  document.querySelectorAll('#diary-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderDiary(type);
+}
+function openDiaryAddModal(){
+  editDiaryIdx=null;
+  document.getElementById('diary-modal-title').textContent='＋ 記録を追加';
+  const now=new Date();
+  document.getElementById('da-dt').value=now.toISOString().slice(0,16);
+  document.getElementById('da-content').value='';
+  document.getElementById('da-person').value='';
+  document.getElementById('da-recorder').value='';
+  document.getElementById('da-vital-wrap').style.display='none';
+  const db=document.getElementById('da-delete-btn');if(db)db.style.display='none';
+  showModal('diary-add-modal');
+}
+function openDiaryEdit(i){
+  editDiaryIdx=i;
+  const db=document.getElementById('da-delete-btn');if(db)db.style.display='inline-flex';
+  const d=DIARY[i];
+  document.getElementById('diary-modal-title').textContent='✏️ 記録を編集';
+  document.getElementById('da-dt').value=d.dt.replace(' ','T').slice(0,16)||'';
+  document.getElementById('da-fac').value=d.fac;
+  document.getElementById('da-type').value=d.type;
+  document.getElementById('da-person').value=d.person||'';
+  document.getElementById('da-recorder').value=d.recorder||'';
+  document.getElementById('da-content').value=d.content||'';
+  if(d.vital){
+    document.getElementById('da-temp').value=d.vital.temp||'';
+    document.getElementById('da-bp').value=d.vital.bp||'';
+    document.getElementById('da-pulse').value=d.vital.pulse||'';
+  }
+  toggleVitalFields();
+  showModal('diary-add-modal');
+}
+function toggleVitalFields(){
+  const type=document.getElementById('da-type')?.value;
+  const wrap=document.getElementById('da-vital-wrap');
+  if(wrap)wrap.style.display=type==='バイタル'?'block':'none';
+}
+function saveDiaryEntry(){
+  const dt=document.getElementById('da-dt').value.replace('T',' ');
+  const fac=document.getElementById('da-fac').value;
+  const type=document.getElementById('da-type').value;
+  const person=document.getElementById('da-person').value;
+  const recorder=document.getElementById('da-recorder').value;
+  const content=document.getElementById('da-content').value.trim();
+  if(!content){alert('内容を入力してください');return;}
+  const vital=type==='バイタル'?{
+    temp:document.getElementById('da-temp').value,
+    bp:document.getElementById('da-bp').value,
+    pulse:document.getElementById('da-pulse').value
+  }:{};
+  const entry={dt,fac,type,person,recorder,content,vital};
+  if(editDiaryIdx!==null)DIARY[editDiaryIdx]=entry;
+  else DIARY.unshift(entry);
+  closeModal('diary-add-modal');
+  renderDiary();
+  safeStorage.set('cocon-diary',JSON.stringify(DIARY));
+  showSuccess('保存しました','記録を保存しました。');
+}
+function deleteDiaryEntry(){
+  if(editDiaryIdx===null)return;
+  if(!confirm('この記録を削除しますか？'))return;
+  DIARY.splice(editDiaryIdx,1);
+  closeModal('diary-add-modal');
+  renderDiary();
+  safeStorage.set('cocon-diary',JSON.stringify(DIARY));
+  showSuccess('削除しました','記録を削除しました。');
+}
+
+// ══════════════════════════════
+// シフト管理
+// ══════════════════════════════
+function renderShift(){
+  const fac=document.getElementById('shift-fac-sel')?.value||'';
+  const tbody=document.getElementById('shift-tbody');if(!tbody)return;
+  const fullH=parseFloat(document.getElementById('shift-full-hours')?.value)||40;
+  const SHIFT_H={'日勤':8,'早番':7,'遅番':7,'夜勤':16,'夜勤専従':16,'日勤・早番':7.5,'日勤・遅番':7.5,'応援・休日':0};
+  const DAYS_PER_WEEK={'常勤':5,'非常勤':3,'登録（応援）':2};
+  let staff=STAFF;
+  if(fac)staff=staff.filter(s=>s.fac===fac);
+  if(staff.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:1.5rem;">スタッフが登録されていません</td></tr>';
+    return;
+  }
+  tbody.innerHTML=staff.map(s=>{
+    const dailyH=SHIFT_H[s.shift]||8;
+    const daysW=DAYS_PER_WEEK[s.emp]||3;
+    const weekH=dailyH*daysW;
+    const conv=fullH>0?(weekH/fullH).toFixed(2):0;
+    return `<tr>
+      <td style="font-weight:700;">${s.name}</td>
+      <td><span class="badge ${FAC_CLS[s.fac]||'bx'}" style="font-size:.56rem;">${s.fac}</span></td>
+      <td><span class="badge ${s.role==='管理者'||s.role==='サービス管理責任者'?'bt':'bx'}">${s.role}</span></td>
+      <td><span class="badge ${s.emp==='常勤'?'bt':s.emp==='非常勤'?'ba':'bx'}">${s.emp}</span></td>
+      <td style="font-size:.74rem;">${s.shift||'—'}</td>
+      <td style="text-align:center;font-weight:700;">${weekH}h</td>
+      <td style="text-align:center;font-weight:700;color:var(--teal);">${conv}</td>
+    </tr>`;
+  }).join('');
+  calcShiftConv();
+}
+function calcShiftConv(){
+  const fullH=parseFloat(document.getElementById('shift-full-hours')?.value)||40;
+  const SHIFT_H={'日勤':8,'早番':7,'遅番':7,'夜勤':16,'夜勤専Vicente専従':16,'日勤・早番':7.5,'日勤・遅番':7.5,'応援・休日':0};
+  const DAYS_PER_WEEK={'常勤':5,'非常勤':3,'登録（応援）':2};
+  const fac=document.getElementById('shift-fac-sel')?.value||'';
+  let staff=STAFF;
+  if(fac)staff=staff.filter(s=>s.fac===fac);
+  const totalConv=staff.reduce((sum,s)=>{
+    const dailyH=SHIFT_H[s.shift]||8;
+    const daysW=DAYS_PER_WEEK[s.emp]||3;
+    return sum+(dailyH*daysW/fullH);
+  },0);
+  const facilityResidents=fac?RES.filter(r=>r[0]===fac).length:RES.length;
+  const required=Math.ceil(facilityResidents/6);
+  const el=document.getElementById('shift-check-result');
+  if(!el)return;
+  if(staff.length===0){el.className='alert ai';el.textContent='スタッフを登録してください';return;}
+  const ok=totalConv>=required;
+  el.className=ok?'alert as':'alert ad';
+  el.innerHTML=`常勤換算 <strong>${totalConv.toFixed(2)}</strong> / 必要数 <strong>${required}</strong>（利用者${facilityResidents}名 ÷ 6）　${ok?'✅ 基準を満たしています':'⚠️ 基準を満たしていません'}`;
+}
+
+// ══════════════════════════════
+// BCP・緊急連絡
+// ══════════════════════════════
+const BCP_CHECKLIST=[
+  '利用者全員の安否確認完了',
+  '避難場所への誘導完了（必要な場合）',
+  '家族・保護者への連絡完了',
+  '春日部市障害福祉課への報告完了',
+  '損害保険会社への連絡完了',
+  '記録・書類の保全完了',
+  '代替支援体制の確保',
+  'サービス継続または一時停止の判断・通知',
+];
+function renderBcp(){
+  const ctbody=document.getElementById('bcp-contacts-tbody');
+  if(ctbody)ctbody.innerHTML=BCP_CONTACTS.map((c,i)=>`<tr>
+    <td><span class="badge bt">${c.role}</span></td>
+    <td style="font-weight:700;">${c.name}</td>
+    <td><a href="tel:${c.tel}" style="color:var(--teal);">${c.tel||'未設定'}</a></td>
+    <td style="font-size:.72rem;">${c.fac||'—'}</td>
+    <td class="no-print"><button onclick="openBcpContactEdit(${i})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.6rem;color:var(--teal);">✏️</button></td>
+  </tr>`).join('');
+  const stbody=document.getElementById('bcp-shelters-tbody');
+  if(stbody)stbody.innerHTML=BCP_SHELTERS.map((s,i)=>`<tr>
+    <td><span class="badge ${FAC_CLS[s.fac]||'bx'}" style="font-size:.56rem;">${s.fac}</span></td>
+    <td style="font-weight:700;">${s.shelter}</td>
+    <td style="font-size:.72rem;">${s.dist}</td>
+    <td style="font-size:.72rem;color:var(--mu);">${s.note||'—'}</td>
+    <td class="no-print"><button onclick="openBcpShelterEdit(${i})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.6rem;color:var(--teal);">✏️</button></td>
+  </tr>`).join('');
+  const cl=document.getElementById('bcp-checklist-body');
+  if(cl)cl.innerHTML=BCP_CHECKLIST.map((item,i)=>{
+    const checked=bcpCheckState[i]||false;
+    return `<div style="display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;border-bottom:1px solid var(--ln);">
+      <input type="checkbox" id="bcp-chk-${i}" ${checked?'checked':''} onchange="toggleBcpCheck(${i})" style="width:16px;height:16px;cursor:pointer;">
+      <label for="bcp-chk-${i}" style="font-size:.8rem;cursor:pointer;${checked?'text-decoration:line-through;color:var(--mu);':''}">${item}</label>
+    </div>`;
+  }).join('');
+}
+function toggleBcpCheck(i){bcpCheckState[i]=!bcpCheckState[i];renderBcp();}
+function resetBcpChecklist(){if(!confirm('チェックリストをリセットしますか？'))return;bcpCheckState={};renderBcp();}
+function openBcpContactModal(){
+  editBcpContactIdx=null;
+  ['bc-role','bc-name','bc-tel','bc-fac'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('bcp-contact-modal-title').textContent='＋ 緊急連絡先を追加';
+  showModal('bcp-contact-modal');
+}
+function openBcpContactEdit(i){
+  editBcpContactIdx=i;
+  const c=BCP_CONTACTS[i];
+  document.getElementById('bc-role').value=c.role;
+  document.getElementById('bc-name').value=c.name;
+  document.getElementById('bc-tel').value=c.tel;
+  document.getElementById('bc-fac').value=c.fac;
+  document.getElementById('bcp-contact-modal-title').textContent='✏️ 緊急連絡先を編集';
+  showModal('bcp-contact-modal');
+}
+function saveBcpContact(){
+  const entry={role:document.getElementById('bc-role').value,name:document.getElementById('bc-name').value,tel:document.getElementById('bc-tel').value,fac:document.getElementById('bc-fac').value};
+  if(editBcpContactIdx!==null)BCP_CONTACTS[editBcpContactIdx]=entry;
+  else BCP_CONTACTS.push(entry);
+  closeModal('bcp-contact-modal');
+  renderBcp();
+  safeStorage.set('cocon-bcp',JSON.stringify({contacts:BCP_CONTACTS,shelters:BCP_SHELTERS}));
+  showSuccess('保存しました','緊急連絡先を更新しました。');
+}
+function deleteBcpContact(){
+  if(editBcpContactIdx===null)return;
+  if(!confirm('削除しますか？'))return;
+  BCP_CONTACTS.splice(editBcpContactIdx,1);
+  closeModal('bcp-contact-modal');
+  renderBcp();
+  safeStorage.set('cocon-bcp',JSON.stringify({contacts:BCP_CONTACTS,shelters:BCP_SHELTERS}));
+}
+function openBcpShelterEdit(i){
+  editBcpShelterIdx=i;
+  const s=BCP_SHELTERS[i];
+  document.getElementById('bs-fac').value=s.fac;
+  document.getElementById('bs-shelter').value=s.shelter;
+  document.getElementById('bs-dist').value=s.dist;
+  document.getElementById('bs-note').value=s.note;
+  showModal('bcp-shelter-modal');
+}
+function saveBcpShelter(){
+  const i=editBcpShelterIdx;
+  BCP_SHELTERS[i]={fac:document.getElementById('bs-fac').value,shelter:document.getElementById('bs-shelter').value,dist:document.getElementById('bs-dist').value,note:document.getElementById('bs-note').value};
+  closeModal('bcp-shelter-modal');
+  renderBcp();
+  safeStorage.set('cocon-bcp',JSON.stringify({contacts:BCP_CONTACTS,shelters:BCP_SHELTERS}));
+  showSuccess('保存しました','避難場所を更新しました。');
+}
+
+// ══════════════════════════════
+// 設定
+// ══════════════════════════════
+function loadSettings(){
+  const k=localStorage.getItem('cocon-api-key');
+  const inp=document.getElementById('api-key-input');
+  if(inp&&k)inp.value=k;
+  const st=document.getElementById('api-key-status');
+  if(st)st.innerHTML=k?'<span style="color:var(--gn)">✓ APIキー設定済み</span>':'<span style="color:var(--am)">⚠ 未設定（AI機能を使うには設定が必要です）</span>';
+  const sbUrl=localStorage.getItem('cocon-sb-url')||'';
+  const sbAnon=localStorage.getItem('cocon-sb-anon')||'';
+  const ui=document.getElementById('sb-url-input');if(ui&&sbUrl)ui.value=sbUrl;
+  const ai=document.getElementById('sb-anon-input');if(ai&&sbAnon)ai.value=sbAnon;
+  const sm=document.getElementById('sb-status-msg');
+  if(sm)sm.innerHTML=sbUrl?'<span style="color:var(--gn)">✓ 設定済み（接続状態はドット🟢を確認）</span>':'';
+}
+function saveSupabaseSettings(){
+  const url=(document.getElementById('sb-url-input').value||'').trim();
+  const anon=(document.getElementById('sb-anon-input').value||'').trim();
+  const msg=document.getElementById('sb-status-msg');
+  if(!url||!anon){if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ URLとキーを両方入力してください</span>';return;}
+  localStorage.setItem('cocon-sb-url',url);
+  localStorage.setItem('cocon-sb-anon',anon);
+  _sb=null;
+  if(msg)msg.innerHTML='<span style="color:var(--am)">🔌 接続中...</span>';
+  setupRealtimeSync();
+  if(msg)msg.innerHTML='<span style="color:var(--gn)">✓ 保存しました。接続中...</span>';
+}
+async function testSupabaseConnection(){
+  const sb=getSb();
+  const msg=document.getElementById('sb-status-msg');
+  if(!sb){if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ URLとキーを設定してください</span>';return;}
+  if(msg)msg.innerHTML='🔌 接続テスト中...';
+  try{
+    const{error}=await sb.from('app_data').select('key').limit(1);
+    if(error)throw error;
+    if(msg)msg.innerHTML='<span style="color:var(--gn)">✅ 接続成功！app_dataテーブルを確認できました。</span>';
+    setSyncStatus('ok');
+  }catch(e){
+    if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ 接続失敗: '+e.message+'</span>';
+    setSyncStatus('err');
+  }
+}
+function setupRealtimeSync(){
+  const sb=getSb();
+  if(!sb){setSyncStatus('off');return;}
+  setSyncStatus('ok');
+  try{
+    sb.channel('cocon-rt')
+      .on('postgres_changes',{event:'*',schema:'public',table:'app_data'},payload=>{
+        if(!payload.new)return;
+        const{key,value}=payload.new;
+        try{localStorage.setItem(key,JSON.stringify(value));}catch(e){}
+        const str=JSON.stringify(value);
+        try{
+          if(key==='cocon-keiei'){KEIEI_DATA=JSON.parse(str);renderKeiei();}
+          else if(key==='cocon-res-v2'){RES=JSON.parse(str);renderResidents();const b=document.getElementById('res-total-badge');if(b)b.textContent=RES.length+'名';}
+          else if(key==='cocon-diary'){DIARY=JSON.parse(str);if(document.getElementById('pv-diary')?.classList.contains('active'))renderDiary();}
+          else if(key==='cocon-staff-v2'){STAFF=JSON.parse(str);if(document.getElementById('pv-staff')?.classList.contains('active'))renderStaff();}
+          else if(key==='cocon-hiyari-v2'){HIYARI=JSON.parse(str);if(document.getElementById('pv-hiyari')?.classList.contains('active'))renderHiyari();}
+          else if(key==='cocon-meetings-v2'){MEETINGS=JSON.parse(str);if(document.getElementById('pv-meetings')?.classList.contains('active'))renderMeetings();}
+          else if(key==='cocon-history-v2'){HISTORY=JSON.parse(str);if(document.getElementById('pv-history')?.classList.contains('active'))renderHistory();}
+          else if(key==='cocon-kasan-v2'){KASAN=JSON.parse(str);if(document.getElementById('pv-kasan')?.classList.contains('active'))renderKasan();}
+          else if(key==='cocon-residents-detail'){RESIDENTS_DETAIL=JSON.parse(str);}
+          else if(key==='cocon-bcp'){const d=JSON.parse(str);if(d.contacts)BCP_CONTACTS=d.contacts;if(d.shelters)BCP_SHELTERS=d.shelters;}
+        }catch(e){}
+      })
+      .subscribe(status=>{
+        if(status==='SUBSCRIBED')setSyncStatus('ok');
+        else if(status==='CHANNEL_ERROR')setSyncStatus('err');
+      });
+  }catch(e){setSyncStatus('err');}
+}
+function saveApiKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  localStorage.setItem('cocon-api-key',k);
+  const st=document.getElementById('api-key-status');
+  if(st)st.innerHTML='<span style="color:var(--gn)">✓ 保存しました</span>';
+  showSuccess('APIキーを保存しました','AI資料生成でClaude APIが使用可能になりました。');
+}
+function toggleApiKeyVisibility(){
+  const el=document.getElementById('api-key-input');
+  if(el)el.type=el.type==='password'?'text':'password';
+}
+function saveCorpSettings(){showSuccess('保存しました','法人情報を更新しました。');}
+function exportData(){
+  const data={RES,STAFF,HIYARI,MEETINGS,HISTORY,KASAN,KEIEI_DATA,DIARY,BCP_CONTACTS,BCP_SHELTERS,RESIDENTS_DETAIL};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='cocon_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importData(){
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(data.RES)RES=data.RES;
+        if(data.STAFF)STAFF=data.STAFF;
+        if(data.HIYARI)HIYARI=data.HIYARI;
+        if(data.MEETINGS)MEETINGS=data.MEETINGS;
+        if(data.HISTORY)HISTORY=data.HISTORY;
+        if(data.KASAN)KASAN=data.KASAN;
+        if(data.KEIEI_DATA)KEIEI_DATA=data.KEIEI_DATA;
+        if(data.DIARY)DIARY=data.DIARY;
+        if(data.BCP_CONTACTS)BCP_CONTACTS=data.BCP_CONTACTS;
+        if(data.BCP_SHELTERS)BCP_SHELTERS=data.BCP_SHELTERS;
+        if(data.RESIDENTS_DETAIL)RESIDENTS_DETAIL=data.RESIDENTS_DETAIL;
+        renderStaff();renderHiyari();renderMeetings();renderHistory();renderKasan();renderKeiei();renderDiary();renderBcp();
+        buildHomeKj();buildFacSum();calcKjStats();
+        showSuccess('インポート完了','データを復元しました。');
+      }catch(e){alert('ファイルの読み込みに失敗しました。JSONファイルを確認してください。');}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+function resetData(){
+  localStorage.clear();
+  showSuccess('リセット完了','ページを再読み込みしてください。');
+  setTimeout(()=>location.reload(),1500);
+}
+
+// ══════════════════════════════
+// 期日管理データ
+// ══════════════════════════════
+let RES=[
+['梅田本町','小笠原','1973/6/22','R8.531','R8.1231','R9.131','','R8.331',''],
+['梅田本町','大竹','1975/3/26','R8.930','R9.1130','R8.1031','','',''],
+['梅田本町','吉田','1959/3/28','申請済','R8.731','依頼中','R8.731','',''],
+['梅田本町','柳澤','1966/8/9','申請済','期限なし','R8.731','R8.930','','保険証R8.731'],
+['梅田本町','澤田','2000/7/1','R8.930','R8.430','R8.430','','',''],
+['梅田本町','須田','1971/9/3','R8.731','','','','','体験？'],
+['大沼','海老名','1994/4/24','R9.1130','期日なし','R8.930','R8.930','',''],
+['大沼','高山','1970/2/10','R9.531','R9.1130','','','R8.331',''],
+['大沼','羽多野','1992/3/5','R10.531','申請中','申請中','','',''],
+['大沼','谷田','2001/2/21','R10.531','R9.1031','手続き済','','',''],
+['西金野井①','坂口','1993/7/5','R9.430','期限なし','無','','R8.331',''],
+['西金野井①','池田','1974/11/20','R9.1231','R8.1231','R8.1130','','',''],
+['西金野井①','石井','1962/10/1','R9.1231','ご家族へ返却','R8.930','','',''],
+['西金野井①','長埜','1975/3/4','R8.531','期限なし','無','','',''],
+['西金野井①','辰田','2005/1/1','R10.630','期限なし','無','','R8.331',''],
+['西金野井①','藤田','1981/10/9','R9.1130','R8.930','R8.731','','',''],
+['西金野井①','飯島','2004/11/10','R10.1130','R8.430','無','','R9.331',''],
+['西金野井②','武藤','2001/11/6','R8.1031','申請済','申請済','','R8.331',''],
+['西金野井②','吉田','1967/6/4','R10.1031','R8.1231','R8.331','','',''],
+['西金野井②','當間','1967/7/11','R8.1031','R9.831','R8.1130','','',''],
+['西金野井②','水原','1969/5/2','R8.531','申請済','申請済','','R8.331',''],
+['西金野井②','角田','—','R10.531','R8.531','申請済','','',''],
+['藤塚','有川','1999/1/14','R8.1031','申請済','申請済','','R8.331',''],
+['藤塚','中里','1974/4/18','R9.228','R8.630','R8.630','','','保険証R8.731'],
+['藤塚','竹ノ内','1987/2/21','R8.831','期日なし','','','',''],
+['藤塚','奥山','1968/8/9','R8.731','R8.930','R8.630','','R8.331',''],
+['牛島','増尾','2004/9/8','R10.930','期限なし','','R8.930','',''],
+['牛島','関根','1961/10/29','R10.1130','期限なし','手続き済','R8.930','R8.930','自立支援R8.131→済'],
+['牛島','鹿浦','1988/11/5','R10.331','手続き中','R8.930','','',''],
+['牛島','三富','2001/11/6','R10.1130','R8.1031','R8.930','','',''],
+['南中曾根','阿世知','1977/12/31','R9.1031','R8.1031','R8.930','R8.930','',''],
+['南中曾根','重永','2006/6/12','R9.131','期限なし','R8.930','R8.930','',''],
+['南中曾根','斉藤栄','1983/10/29','','','','','',''],
+['南中曾根','松本','1992/6/17','R8.630','R9.228','申請済','','R8.2月',''],
+['西金野井③','小池','—','','','','','','データ未入力'],
+['西金野井③','尾形','—','','','','','','データ未入力'],
+];
+
+let FAC_CLS={'梅田本町':'bt','大沼':'ba','西金野井①':'bp','西金野井②':'bo','藤塚':'bg','牛島':'br','南中曾根':'bt','西金野井③':'bx'};
+const TODAY=new Date();
+
+function parseD(s){
+  if(!s||typeof s!=='string')return null;
+  const c=s.replace(/迄|[\s　]/g,'').replace(/\.\./,'.');
+  const m=c.match(/^R(\d+)\.(\d+)$/);
+  if(!m)return null;
+  const ry=+m[1],ds=m[2];
+  let mo,dy;
+  if(ds.length===3){mo=+ds[0];dy=+ds.slice(1);}
+  else if(ds.length===4){mo=+ds.slice(0,2);dy=+ds.slice(2);}
+  else return null;
+  if(mo<1||mo>12||dy<1||dy>31)return null;
+  return new Date(2018+ry,mo-1,dy);
+}
+function daysLeft(s){const d=parseD(s);if(!d)return null;return Math.floor((d-TODAY)/86400000);}
+function fmtD(s){const d=parseD(s);if(!d)return null;return `'${String(d.getFullYear()).slice(2)}/${d.getMonth()+1}/${d.getDate()}`;}
+function cellCls(s){const d=daysLeft(s);if(d===null)return 'cell-txt';if(d<0)return 'cell-exp';if(d<=30)return 'cell-urg';if(d<=90)return 'cell-war';return 'cell-ok';}
+function cellHTML(s){
+  if(!s||s==='')return '<span style="color:#ddd;font-size:.6rem;">—</span>';
+  const d=daysLeft(s);
+  if(d===null)return `<span class="d-txt">${s}</span>`;
+  const fd=fmtD(s);
+  if(d<0)return `<div class="d-exp">${fd}<br><small>超過${Math.abs(d)}日</small></div>`;
+  if(d<=30)return `<div class="d-urg">${fd}<br><small>残${d}日</small></div>`;
+  if(d<=90)return `<div class="d-war">${fd}<br><small>残${d}日</small></div>`;
+  return `<div class="d-ok">${fd}</div>`;
+}
+let editKjIdx=null;
+function renderKijitsu(fac){
+  const rows=(fac==='全施設'?RES:RES.filter(r=>r[0]===fac)).map(r=>({r,i:RES.indexOf(r)}));
+  document.getElementById('kj-tbody').innerHTML=rows.map(({r,i})=>{
+    const[f,n,dob,...v]=r;
+    return `<tr><td class="kj-fac"><span class="badge ${FAC_CLS[f]||'bx'}" style="font-size:.56rem;">${f}</span></td>
+    <td class="kj-name">${n}<div style="font-size:.56rem;color:var(--mu);">${dob||''}</div></td>
+    ${v.slice(0,5).map(x=>`<td class="${cellCls(x)}">${cellHTML(x)}</td>`).join('')}
+    <td style="font-size:.62rem;color:var(--mu);text-align:left;">${v[5]||''}</td>
+    <td class="no-print"><button onclick="openKjEdit(${i})" style="background:none;border:1px solid var(--ln);border-radius:4px;padding:.16rem .35rem;cursor:pointer;font-size:.62rem;color:var(--teal);">✏️</button></td></tr>`;
+  }).join('');
+}
+function filterFac(fac,el){
+  document.querySelectorAll('#kj-tabs .tab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderKijitsu(fac);
+}
+function openKjEdit(i){
+  editKjIdx=i;const r=RES[i];const[f,n,dob,...v]=r;
+  document.getElementById('edit-kj-name').textContent=n;
+  document.getElementById('edit-kj-dob').textContent=dob||'';
+  const b=document.getElementById('edit-kj-badge');b.className=`badge ${FAC_CLS[f]||'bx'}`;b.textContent=f;
+  for(let x=0;x<6;x++){const el=document.getElementById('ef-'+x);if(el)el.value=v[x]||'';}
+  document.getElementById('ef-name').value=n;
+  document.getElementById('ef-dob').value=dob||'';
+  document.getElementById('ef-fac').value=f;
+  showModal('edit-kj-modal');
+}
+function saveKjEdit(){
+  if(editKjIdx===null)return;
+  const newName=document.getElementById('ef-name').value.trim()||RES[editKjIdx][1];
+  const newDob=document.getElementById('ef-dob').value.trim()||RES[editKjIdx][2];
+  const newFac=document.getElementById('ef-fac').value;
+  RES[editKjIdx][0]=newFac;
+  RES[editKjIdx][1]=newName;
+  RES[editKjIdx][2]=newDob;
+  for(let x=0;x<6;x++){const el=document.getElementById('ef-'+x);if(el)RES[editKjIdx][3+x]=el.value;}
+  closeModal('edit-kj-modal');
+  const at=document.querySelector('#kj-tabs .tab.active');
+  renderKijitsu(at?at.textContent.trim():'全施設');
+  buildHomeKj();buildFacSum();calcKjStats();
+  saveResStorage();
+  showSuccess('保存しました',`${RES[editKjIdx][1]}さんの情報を更新しました。`);
+}
+function deleteResident(){
+  if(editKjIdx===null)return;
+  const name=RES[editKjIdx][1];
+  if(!confirm(`${name}を削除しますか？`))return;
+  RES.splice(editKjIdx,1);
+  closeModal('edit-kj-modal');
+  const at=document.querySelector('#kj-tabs .tab.active');
+  renderKijitsu(at?at.textContent.trim():'全施設');
+  buildHomeKj();buildFacSum();calcKjStats();
+  saveResStorage();
+  showSuccess('削除しました',`${name}のデータを削除しました。`);
+}
+function openAddResidentModal(){showModal('add-resident-modal');}
+function saveNewResident(){
+  const name=document.getElementById('ar-name').value.trim();
+  if(!name){alert('氏名を入力してください');return;}
+  const fac=document.getElementById('ar-fac').value;
+  const dob=document.getElementById('ar-dob').value.trim()||'—';
+  RES.push([fac,name,dob,'','','','','','']);
+  closeModal('add-resident-modal');
+  document.getElementById('ar-name').value='';document.getElementById('ar-dob').value='';
+  const at=document.querySelector('#kj-tabs .tab.active');
+  renderKijitsu(at?at.textContent.trim():'全施設');
+  renderResidents();
+  buildHomeKj();buildFacSum();calcKjStats();
+  saveResStorage();
+  showSuccess('追加しました',`${name}さんを追加しました。✏️ボタンから期日情報を入力してください。`);
+}
+async function saveResStorage(){
+  try{await safeStorage.set('cocon-res-v2',JSON.stringify(RES));}catch(e){}
+}
+function calcKjStats(){
+  let urg=0,war=0,ok=0;
+  RES.forEach(r=>r.slice(3,8).forEach(v=>{const d=daysLeft(v);if(d===null)return;if(d<0||d<=30)urg++;else if(d<=90)war++;else ok++;}));
+  const su=document.getElementById('kj-urg');const sw=document.getElementById('kj-war');const so=document.getElementById('kj-ok');
+  const su2=document.getElementById('stat-urg');
+  if(su)su.textContent=urg;if(sw)sw.textContent=war;if(so)so.textContent=ok;if(su2)su2.textContent=urg;
+  const al=document.getElementById('kj-alert');
+  if(al&&urg>0){al.className='alert ad';al.innerHTML=`🔴 <strong>【要対応】残30日以内の期限が合計${urg}件あります。</strong>`;al.style.display='block';}
+}
+function buildHomeKj(){
+  const items=[];
+  RES.forEach(r=>{
+    const[f,n]=[r[0],r[1]];
+    const ns=['受給者証','障害者手帳','自立支援','重度心身','生保'];
+    r.slice(3,8).forEach((v,i)=>{const d=daysLeft(v);if(d!==null&&d>=0&&d<=90)items.push({f,n,v,col:ns[i],d});});
+  });
+  items.sort((a,b)=>a.d-b.d);
+  const el=document.getElementById('home-kj-tbl');if(!el)return;
+  el.innerHTML=items.slice(0,5).map(it=>{
+    const s=it.d<=30?'color:var(--rd);font-weight:700;':'color:var(--am);font-weight:700;';
+    return `<tr><td style="font-weight:700;">${it.n}</td><td><span class="badge ${FAC_CLS[it.f]||'bx'}" style="font-size:.54rem;">${it.f}</span></td><td>${it.col}</td><td style="${s}">残${it.d}日</td></tr>`;
+  }).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--mu);font-size:.76rem;padding:.9rem;">要対応の期限はありません</td></tr>';
+}
+// ══════════════════════════════
+// 棟管理・動的UI更新
+// ══════════════════════════════
+let editFacilityIdx=null;
+function openAddFacilityModal(i){
+  editFacilityIdx=i!=null?i:null;
+  const del=document.getElementById('af-delete-btn');
+  if(i!=null){
+    const f=KEIEI_DATA.facilities[i];
+    document.getElementById('af-name').value=f.name;
+    document.getElementById('af-capacity').value=f.capacity;
+    document.getElementById('af-residents').value=f.residents;
+    document.getElementById('af-staffcost').value=f.staffCost;
+    document.getElementById('add-fac-modal-title').textContent='✏️ 棟を編集';
+    if(del)del.style.display='inline-flex';
+  } else {
+    document.getElementById('af-name').value='';
+    document.getElementById('af-capacity').value=4;
+    document.getElementById('af-residents').value=0;
+    document.getElementById('af-staffcost').value=320000;
+    document.getElementById('add-fac-modal-title').textContent='＋ 棟を追加';
+    if(del)del.style.display='none';
+  }
+  showModal('add-facility-modal');
+}
+function saveNewFacility(){
+  const name=document.getElementById('af-name').value.trim();
+  if(!name){alert('棟名を入力してください');return;}
+  const entry={name,capacity:parseInt(document.getElementById('af-capacity').value)||0,residents:parseInt(document.getElementById('af-residents').value)||0,staffCost:parseInt(document.getElementById('af-staffcost').value)||0};
+  if(editFacilityIdx!=null){
+    KEIEI_DATA.facilities[editFacilityIdx]=entry;
+  } else {
+    KEIEI_DATA.facilities.push(entry);
+  }
+  const isEdit=editFacilityIdx!=null;
+  closeModal('add-facility-modal');
+  rebuildFacUI();
+  renderKeiei();
+  safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+  showSuccess(isEdit?'棟情報を更新しました':'棟を追加しました',`${name}を${isEdit?'更新':'追加'}しました。`);
+  editFacilityIdx=null;
+}
+function deleteFacility(){
+  if(editFacilityIdx===null)return;
+  const name=KEIEI_DATA.facilities[editFacilityIdx].name;
+  if(!confirm(`「${name}」を削除しますか？この棟の利用者データは残ります。`))return;
+  KEIEI_DATA.facilities.splice(editFacilityIdx,1);
+  closeModal('add-facility-modal');
+  rebuildFacUI();
+  renderKeiei();
+  safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+  showSuccess('削除しました',`${name}を削除しました。`);
+  editFacilityIdx=null;
+}
+function rebuildFacUI(){
+  const FAC_BADGE_CYCLE=['bt','ba','bp','bo','bg','br','bx','bt','ba','bp','bg','br'];
+  const facs=KEIEI_DATA.facilities.map(f=>f.name);
+  facs.forEach((f,i)=>{if(!FAC_CLS[f])FAC_CLS[f]=FAC_BADGE_CYCLE[i%FAC_BADGE_CYCLE.length];});
+  const facOpts=facs.map(f=>`<option>${f}</option>`).join('');
+  // kj-tabs
+  const kjt=document.getElementById('kj-tabs');
+  if(kjt){
+    const at=kjt.querySelector('.tab.active')?.textContent.trim()||'全施設';
+    kjt.innerHTML=`<button class="tab${at==='全施設'?' active':''}" onclick="filterFac('全施設',this)">全施設</button>`
+      +facs.map(f=>`<button class="tab${f===at?' active':''}" onclick="filterFac('${f}',this)">${f}</button>`).join('');
+  }
+  // res-detail-tabs
+  const rdt=document.getElementById('res-detail-tabs');
+  if(rdt){
+    const at=rdt.querySelector('.tab.active')?.textContent.trim()||'全施設';
+    rdt.innerHTML=`<button class="tab${at==='全施設'?' active':''}" onclick="filterResDet('全施設',this)">全施設</button>`
+      +facs.map(f=>`<button class="tab${f===at?' active':''}" onclick="filterResDet('${f}',this)">${f}</button>`).join('');
+  }
+  // 全select要素のうち施設名を含むものを更新
+  const specialIds=['diary-fac-filter','shift-fac-sel'];
+  document.querySelectorAll('select').forEach(sel=>{
+    if(specialIds.includes(sel.id))return;
+    const vals=Array.from(sel.options).map(o=>o.value||o.text);
+    if(!vals.some(v=>FAC_CLS[v]||v==='梅田本町'))return;
+    const hasGodo=vals.includes('全事業所合同');
+    const hasAll=vals.some(v=>v==='全事業所')&&!hasGodo;
+    const cur=sel.value;
+    sel.innerHTML=facOpts+(hasGodo?'<option>全事業所合同</option>':hasAll?'<option>全事業所</option>':'');
+    if(facs.includes(cur))sel.value=cur;
+  });
+  // 特殊select（先頭に空/全事業所オプション）
+  ['diary-fac-filter','shift-fac-sel'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    const label=id==='diary-fac-filter'?'全事業所':'全事業所';
+    sel.innerHTML=`<option value="">${label}</option>`+facOpts;
+    if(facs.includes(cur))sel.value=cur;
+  });
+}
+
+// ══════════════════════════════
+// 月次データ管理
+// ══════════════════════════════
+function openAddMonthlyModal(){
+  const d=new Date();
+  const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('am-month').value=m;
+  ['am-koboren','am-jippi','am-shochu','am-memo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  showModal('add-monthly-modal');
+}
+function saveMonthlyData(){
+  const month=document.getElementById('am-month').value.trim();
+  if(!month){alert('対象月を入力してください');return;}
+  if(!KEIEI_DATA.monthlyActual)KEIEI_DATA.monthlyActual={};
+  const koboren=parseInt(document.getElementById('am-koboren').value)||0;
+  const jippi=parseInt(document.getElementById('am-jippi').value)||0;
+  const shoryoKaizen=parseInt(document.getElementById('am-shochu').value)||0;
+  KEIEI_DATA.monthlyActual[month]={koboren,jippi,shoryoKaizen,total:koboren+jippi,memo:document.getElementById('am-memo').value};
+  closeModal('add-monthly-modal');
+  renderKeiei();
+  safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+  showSuccess('保存しました',`${month}の月次データを登録しました。`);
+}
+function deleteMonthlyData(month){
+  if(!confirm(`${month}のデータを削除しますか？`))return;
+  if(KEIEI_DATA.monthlyActual)delete KEIEI_DATA.monthlyActual[month];
+  renderKeiei();
+  safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+}
+
+function buildFacSum(){
+  const facs=KEIEI_DATA.facilities.map(f=>f.name);
+  // 利用者詳細管理の件数バッジ更新
+  const rb=document.getElementById('res-total-badge');if(rb)rb.textContent=RES.length+'名';
+  const el=document.getElementById('home-fac-summary');if(!el)return;
+  let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem;">';
+  facs.forEach(f=>{
+    const ms=RES.filter(r=>r[0]===f);
+    let u=0,w=0;
+    ms.forEach(r=>r.slice(3,8).forEach(v=>{const d=daysLeft(v);if(d===null)return;if(d<=30)u++;else if(d<=90)w++;}));
+    const dot=u>0?'🔴':w>0?'🟡':'🟢';
+    h+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:.38rem .55rem;border:1px solid var(--ln);border-radius:5px;background:#fff;cursor:pointer;" onclick="go('kijitsu',null);setTimeout(()=>filterFac('${f}',null),100)">
+      <span style="font-size:.74rem;font-weight:700;">${dot} ${f}</span>
+      <span style="font-size:.62rem;color:var(--mu);">${ms.length}名${u>0?`<span style="color:var(--rd);font-weight:700;margin-left:.3rem;">⚠${u}</span>`:''}${w>0?`<span style="color:var(--go);margin-left:.22rem;">△${w}</span>`:''}</span>
+    </div>`;
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+// ══════════════════════════════
+// スタッフ管理
+// ══════════════════════════════
+let STAFF=[];
+let editStaffIdx=null;
+const ROLE_COLORS=['#1a6b6b','#c05a10','#5a3a8a','#2a7040','#555','#888','#aaa'];
+const ROLES=['管理者','サービス管理責任者','世話人','生活支援員','夜間支援員','補助員','その他'];
+
+function renderStaff(){
+  const el=document.getElementById('staff-list-wrap');
+  const cnt=document.getElementById('staff-total-badge');
+  const sc=document.getElementById('staff-cnt');
+  if(cnt)cnt.textContent=`${STAFF.length}名`;
+  if(sc)sc.textContent=STAFF.length;
+  const uname=document.getElementById('sb-user-name');
+  if(uname&&STAFF.length>0&&uname.textContent==='（スタッフ未設定）'){
+    const mgr=STAFF.find(s=>s.role==='管理者');
+    if(mgr){uname.textContent=mgr.name;document.getElementById('sb-user-role').textContent=mgr.role+' / '+mgr.fac;}
+  }
+  if(!el)return;
+  if(STAFF.length===0){
+    el.innerHTML=`<div class="staff-empty"><div class="se-icon">👥</div><p>スタッフ情報がまだ登録されていません。<br>「スタッフを追加」から登録を開始してください。</p><button class="btn btn-primary" onclick="openStaffModal()">＋ スタッフを追加する</button></div>`;
+    return;
+  }
+  const facs=[...new Set(STAFF.map(s=>s.fac))];
+  let h='';
+  facs.forEach(f=>{
+    const members=STAFF.filter(s=>s.fac===f);
+    const cls=FAC_CLS[f]||'bx';
+    h+=`<div style="border-bottom:1px solid var(--ln);padding:.5rem 1rem .3rem;background:#faf8f3;display:flex;align-items:center;gap:.5rem;"><span class="badge ${cls}">${f}</span><span style="font-size:.72rem;color:var(--mu);">${members.length}名</span></div>`;
+    h+='<table class="tbl" style="margin:0;"><thead><tr><th>氏名</th><th>役職</th><th>雇用形態</th><th>シフト</th><th>資格</th><th>備考</th><th class="no-print"></th></tr></thead><tbody>';
+    members.forEach((s)=>{
+      const gi=STAFF.indexOf(s);
+      const ri=ROLES.indexOf(s.role);
+      const col=ri>=0?ROLE_COLORS[ri]:ROLE_COLORS[6];
+      h+=`<tr>
+        <td><div style="display:flex;align-items:center;gap:.45rem;">
+          <div class="av-sm" style="background:${col};">${s.name.charAt(0)}</div>
+          <strong style="font-size:.78rem;">${s.name}</strong>
+        </div></td>
+        <td><span class="badge ${s.role==='管理者'||s.role==='サービス管理責任者'?'bt':'bx'}">${s.role}</span></td>
+        <td><span class="badge ${s.emp==='常勤'?'bt':s.emp==='非常勤'?'ba':'bx'}">${s.emp}</span></td>
+        <td style="font-size:.72rem;">${s.shift||'—'}</td>
+        <td style="font-size:.7rem;color:var(--mu);">${s.cert||'—'}</td>
+        <td style="font-size:.7rem;color:var(--mu);">${s.note||'—'}</td>
+        <td class="no-print"><div style="display:flex;gap:.22rem;">
+          <button onclick="editStaff(${gi})" style="background:none;border:1px solid var(--ln);border-radius:3px;padding:.14rem .32rem;cursor:pointer;font-size:.6rem;color:var(--teal);">✏️</button>
+          <button onclick="delStaff(${gi})" style="background:none;border:1px solid var(--rp);border-radius:3px;padding:.14rem .32rem;cursor:pointer;font-size:.6rem;color:var(--rd);">🗑</button>
+        </div></td>
+      </tr>`;
+    });
+    h+='</tbody></table>';
+  });
+  el.innerHTML=h;
+  const dl=document.getElementById('dist-staff-list');
+  if(dl&&STAFF.length>0){
+    dl.innerHTML=STAFF.map(s=>`<label style="display:flex;align-items:center;gap:.35rem;font-size:.76rem;padding:.3rem;border:1px solid var(--ln);border-radius:4px;cursor:pointer;"><input type="checkbox" checked> ${s.name}（${s.role}）</label>`).join('');
+  }
+}
+function openStaffModal(idx){
+  editStaffIdx=idx!=null?idx:null;
+  document.getElementById('staff-modal-title').textContent=idx!=null?'スタッフを編集':'＋ スタッフを追加';
+  if(idx!=null){const s=STAFF[idx];document.getElementById('sf-name').value=s.name;document.getElementById('sf-fac').value=s.fac;document.getElementById('sf-role').value=s.role;document.getElementById('sf-emp').value=s.emp;document.getElementById('sf-shift').value=s.shift||'日勤';document.getElementById('sf-cert').value=s.cert||'';document.getElementById('sf-note').value=s.note||'';}
+  else{['sf-name','sf-cert','sf-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});}
+  showModal('staff-modal');
+}
+function editStaff(i){openStaffModal(i);}
+function delStaff(i){
+  if(!confirm(`${STAFF[i].name}を削除しますか？`))return;
+  STAFF.splice(i,1);
+  saveStaffStorage();renderStaff();
+}
+async function saveStaffEntry(){
+  const name=document.getElementById('sf-name').value.trim();
+  if(!name){alert('氏名を入力してください');return;}
+  const s={name,fac:document.getElementById('sf-fac').value,role:document.getElementById('sf-role').value,emp:document.getElementById('sf-emp').value,shift:document.getElementById('sf-shift').value,cert:document.getElementById('sf-cert').value.trim(),note:document.getElementById('sf-note').value.trim()};
+  if(editStaffIdx!=null)STAFF[editStaffIdx]=s;
+  else STAFF.push(s);
+  await saveStaffStorage();
+  closeModal('staff-modal');renderStaff();
+  showSuccess(editStaffIdx!=null?'スタッフ情報を更新しました':'スタッフを追加しました',`${name}さんの情報を保存しました。`);
+  editStaffIdx=null;
+}
+async function saveStaffStorage(){try{await safeStorage.set('cocon-staff-v2',JSON.stringify(STAFF));}catch(e){}}
+
+// ══════════════════════════════
+// ヒヤリハット
+// ══════════════════════════════
+let HIYARI=[
+  {dt:'2026/03/06 02:40',fac:'梅田本町',type:'転倒未遂',person:'',reporter:'',desc:'夜間廊下でふらつき',cause:'',action:'',prevention:'',status:'未処理'},
+  {dt:'2026/03/05 08:10',fac:'大沼',type:'服薬関連',person:'',reporter:'',desc:'朝の服薬確認もれ',cause:'',action:'',prevention:'',status:'未処理'},
+  {dt:'2026/03/03 19:30',fac:'梅田本町',type:'声かけ・対応',person:'',reporter:'',desc:'支援員の声かけが強くなる',cause:'',action:'',prevention:'',status:'確認中'},
+];
+let editHiyariIdx=null;
+const TYPE_CLS={'転倒・転落':'br','転倒未遂':'br','服薬関連':'bp','声かけ・対応':'bt','外出・離棟':'ba','誤嚥・窒息':'br','事故（怪我あり）':'br','その他':'bx'};
+const STATUS_CLS={'未処理':'ba','確認中':'bt','処理済':'bg'};
+
+function renderHiyari(){
+  const tbody=document.getElementById('hiyari-tbody');if(!tbody)return;
+  tbody.innerHTML=HIYARI.map((h,i)=>`<tr>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:.68rem;">${h.dt}</td>
+    <td><span class="badge ${FAC_CLS[h.fac]||'bx'}" style="font-size:.55rem;">${h.fac}</span></td>
+    <td><span class="badge ${TYPE_CLS[h.type]||'bx'}">${h.type}</span></td>
+    <td>${h.desc||'—'}</td>
+    <td><span class="badge ${STATUS_CLS[h.status]||'bx'}">${h.status}</span></td>
+    <td class="no-print"><div style="display:flex;gap:.22rem;">
+      <button onclick="openHiyariEdit(${i})" class="btn btn-ghost" style="font-size:.6rem;padding:.18rem .38rem;">✏️ 編集</button>
+    </div></td>
+  </tr>`).join('');
+  const unproc=HIYARI.filter(h=>h.status==='未処理').length;
+  const un=document.getElementById('hiyari-unproc');if(un)un.textContent=unproc;
+  const tot=document.getElementById('hiyari-total');if(tot)tot.textContent=HIYARI.length;
+  const hcnt=document.getElementById('home-hiyari-cnt');if(hcnt)hcnt.textContent=unproc;
+  const sb=document.getElementById('sb-hiyari-badge');if(sb)sb.textContent=unproc>0?unproc:'';
+}
+function openHiyariEdit(i){
+  editHiyariIdx=i;
+  const h=HIYARI[i];
+  document.getElementById('hiyari-modal-title').textContent='✏️ ヒヤリハット編集';
+  document.getElementById('he-dt').value=h.dt;
+  document.getElementById('he-fac').value=h.fac;
+  document.getElementById('he-reporter').value=h.reporter||'';
+  document.getElementById('he-type').value=h.type;
+  document.getElementById('he-person').value=h.person||'';
+  document.getElementById('he-desc').value=h.desc||'';
+  document.getElementById('he-cause').value=h.cause||'';
+  document.getElementById('he-action').value=h.action||'';
+  document.getElementById('he-prevention').value=h.prevention||'';
+  document.getElementById('he-status').value=h.status||'未処理';
+  document.getElementById('he-idx').value=i;
+  showModal('hiyari-edit-modal');
+}
+function saveHiyariEdit(){
+  const i=parseInt(document.getElementById('he-idx').value);
+  HIYARI[i]={
+    dt:document.getElementById('he-dt').value,
+    fac:document.getElementById('he-fac').value,
+    reporter:document.getElementById('he-reporter').value,
+    type:document.getElementById('he-type').value,
+    person:document.getElementById('he-person').value,
+    desc:document.getElementById('he-desc').value,
+    cause:document.getElementById('he-cause').value,
+    action:document.getElementById('he-action').value,
+    prevention:document.getElementById('he-prevention').value,
+    status:document.getElementById('he-status').value,
+  };
+  closeModal('hiyari-edit-modal');
+  renderHiyari();saveHiyariStorage();
+  showSuccess('保存しました','ヒヤリハット情報を更新しました。');
+}
+function deleteHiyari(){
+  const i=parseInt(document.getElementById('he-idx').value);
+  if(!confirm('このヒヤリハット記録を削除しますか？'))return;
+  HIYARI.splice(i,1);
+  closeModal('hiyari-edit-modal');renderHiyari();saveHiyariStorage();
+  showSuccess('削除しました','ヒヤリハット記録を削除しました。');
+}
+function submitHiyari(){
+  const dt=document.getElementById('hn-dt').value;
+  const fac=document.getElementById('hn-fac').value;
+  const reporter=document.getElementById('hn-reporter').value;
+  const type=document.getElementById('hn-type').value;
+  const person=document.getElementById('hn-person').value;
+  const desc=document.getElementById('hn-desc').value;
+  if(!desc.trim()){alert('状況の説明を入力してください');return;}
+  HIYARI.unshift({
+    dt:dt?dt.replace('T',' '):new Date().toLocaleString('ja-JP').slice(0,16),
+    fac,reporter,type,person,desc,
+    cause:document.getElementById('hn-cause').value,
+    action:document.getElementById('hn-action').value,
+    prevention:document.getElementById('hn-prevention').value,
+    status:'未処理'
+  });
+  saveHiyariStorage();renderHiyari();
+  showSuccess('ヒヤリハットを報告しました','内容がシステムに保存され、管理者に通知されました。');
+  go('hiyari',null);
+}
+async function saveHiyariStorage(){try{await safeStorage.set('cocon-hiyari-v2',JSON.stringify(HIYARI));}catch(e){}}
+
+// ══════════════════════════════
+// 会議
+// ══════════════════════════════
+let MEETINGS=[
+  {name:'虐待防止委員会（第2回）',fac:'梅田本町',deadline:'03/15',confirmed:0,total:0,status:'進行中'},
+];
+let editMeetingIdx=null;
+
+function renderMeetings(){
+  const tbody=document.getElementById('meetings-tbody');if(!tbody)return;
+  tbody.innerHTML=MEETINGS.map((m,i)=>`<tr>
+    <td style="font-weight:700;">${m.name}</td>
+    <td><span class="badge ${FAC_CLS[m.fac]||'bx'}" style="font-size:.55rem;">${m.fac}</span></td>
+    <td><div class="pbar-w"><div class="pbar"><div class="pbar-f" style="width:${m.total>0?Math.round(m.confirmed/m.total*100):0}%"></div></div><span style="font-size:.62rem;color:var(--mu);">${m.confirmed}/${m.total}</span></div></td>
+    <td>${m.deadline}</td>
+    <td><div style="display:flex;gap:.28rem;">
+      <button class="btn btn-ghost" style="font-size:.6rem;padding:.2rem .4rem;" onclick="showModal('remind-modal')">📣 リマインド</button>
+      <button class="btn btn-secondary" style="font-size:.6rem;padding:.2rem .4rem;" onclick="go('output',null)">📄 議事録</button>
+      <button class="btn btn-ghost" style="font-size:.6rem;padding:.2rem .4rem;" onclick="openMeetingEdit(${i})">✏️ 編集</button>
+    </div></td>
+  </tr>`).join('');
+  const sb=document.getElementById('sb-meetings-badge');
+  if(sb)sb.textContent=MEETINGS.filter(m=>m.status==='進行中').length||'';
+}
+function openMeetingEdit(i){
+  editMeetingIdx=i;const m=MEETINGS[i];
+  document.getElementById('me-mname').value=m.name;
+  document.getElementById('me-mfac').value=m.fac;
+  document.getElementById('me-mdeadline').value=m.deadline;
+  document.getElementById('me-mstatus').value=m.status;
+  document.getElementById('me-midx').value=i;
+  showModal('meeting-edit-modal');
+}
+function saveMeetingEdit(){
+  const i=parseInt(document.getElementById('me-midx').value);
+  MEETINGS[i]={...MEETINGS[i],name:document.getElementById('me-mname').value,fac:document.getElementById('me-mfac').value,deadline:document.getElementById('me-mdeadline').value,status:document.getElementById('me-mstatus').value};
+  closeModal('meeting-edit-modal');renderMeetings();saveMeetingsStorage();
+  showSuccess('保存しました','会議情報を更新しました。');
+}
+function deleteMeeting(){
+  const i=parseInt(document.getElementById('me-midx').value);
+  if(!confirm('この会議を削除しますか？'))return;
+  MEETINGS.splice(i,1);
+  closeModal('meeting-edit-modal');renderMeetings();saveMeetingsStorage();
+  showSuccess('削除しました','会議を削除しました。');
+}
+async function saveMeetingsStorage(){try{await safeStorage.set('cocon-meetings-v2',JSON.stringify(MEETINGS));}catch(e){}}
+
+// ══════════════════════════════
+// アーカイブ
+// ══════════════════════════════
+let HISTORY=[
+  {type:'虐待防止',name:'第1回（2026年度）',fac:'梅田本町',date:'2026/01/18',status:'完了'},
+  {type:'感染対策',name:'第1回（2026年度）',fac:'全事業所',date:'2026/02/08',status:'完了'},
+  {type:'身体拘束',name:'第1回（2025年度）',fac:'全事業所',date:'2025/09/12',status:'完了'},
+];
+let editArchiveIdx=null;
+const ARCH_TYPE_CLS={'虐待防止':'bt','感染対策':'ba','身体拘束':'br','個別支援':'bp','その他':'bx'};
+
+function renderHistory(){
+  const tbody=document.getElementById('history-tbody');if(!tbody)return;
+  tbody.innerHTML=HISTORY.map((h,i)=>`<tr>
+    <td><span class="badge ${ARCH_TYPE_CLS[h.type]||'bx'}">${h.type}</span></td>
+    <td>${h.name}</td>
+    <td>${h.fac}</td>
+    <td>${h.date}</td>
+    <td><span class="badge ${h.status==='完了'?'bg':'ba'}">${h.status}</span></td>
+    <td class="no-print"><div style="display:flex;gap:.22rem;">
+      <button class="btn btn-ghost" style="font-size:.6rem;padding:.2rem .4rem;" onclick="go('output',null)">議事録</button>
+      <button class="btn btn-ghost arch-edit-btn" style="font-size:.6rem;padding:.2rem .4rem;" onclick="openArchiveEdit(${i})">✏️</button>
+    </div></td>
+  </tr>`).join('');
+}
+function openAddArchiveModal(){
+  editArchiveIdx=null;
+  document.getElementById('archive-modal-title').textContent='＋ アーカイブを追加';
+  ['ae-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ae-date').value=new Date().toLocaleDateString('ja-JP').replaceAll('/','/');
+  document.getElementById('ae-status').value='完了';
+  document.getElementById('ae-idx').value='';
+  showModal('archive-edit-modal');
+}
+function openArchiveEdit(i){
+  editArchiveIdx=i;const h=HISTORY[i];
+  document.getElementById('archive-modal-title').textContent='✏️ アーカイブを編集';
+  document.getElementById('ae-type').value=h.type;
+  document.getElementById('ae-name').value=h.name;
+  document.getElementById('ae-fac').value=h.fac;
+  document.getElementById('ae-date').value=h.date;
+  document.getElementById('ae-status').value=h.status;
+  document.getElementById('ae-idx').value=i;
+  showModal('archive-edit-modal');
+}
+function saveArchiveEdit(){
+  const idxVal=document.getElementById('ae-idx').value;
+  const entry={type:document.getElementById('ae-type').value,name:document.getElementById('ae-name').value,fac:document.getElementById('ae-fac').value,date:document.getElementById('ae-date').value,status:document.getElementById('ae-status').value};
+  if(idxVal===''){HISTORY.unshift(entry);}
+  else{HISTORY[parseInt(idxVal)]=entry;}
+  closeModal('archive-edit-modal');renderHistory();saveHistoryStorage();
+  showSuccess('保存しました','アーカイブ情報を更新しました。');
+}
+function deleteArchive(){
+  const i=parseInt(document.getElementById('ae-idx').value);
+  if(isNaN(i))return;
+  if(!confirm('このアーカイブを削除しますか？'))return;
+  HISTORY.splice(i,1);
+  closeModal('archive-edit-modal');renderHistory();saveHistoryStorage();
+  showSuccess('削除しました','アーカイブを削除しました。');
+}
+async function saveHistoryStorage(){try{await safeStorage.set('cocon-history-v2',JSON.stringify(HISTORY));}catch(e){}}
+
+// ══════════════════════════════
+// 加算チェッカー
+// ══════════════════════════════
+let KASAN=[
+  {id:'k1',status:'未取得',name:'夜間支援等体制加算（Ⅱ）',amount:'+¥54/日・人',badge:'br',note:'夜間支援計画書を作成するだけで取得できます。月額換算 約+¥11,340の増収になります。',userNote:''},
+  {id:'k2',status:'要確認',name:'重度障害者支援加算',amount:'+¥800/日・該当者',badge:'ba',note:'区分5・6の利用者の個別支援計画に加算根拠を追記し、担当スタッフの研修修了証を確認することで取得できます。',userNote:''},
+];
+let editKasanIdx=null;
+const KASAN_ST_CLS={'未取得':'br','要確認':'ba','取得済':'bg','対応中':'bt'};
+
+function renderKasan(){
+  const body=document.getElementById('kasan-body');if(!body)return;
+  body.innerHTML=KASAN.map((k,i)=>`
+    <div style="border:1px solid var(--ln);border-radius:6px;overflow:hidden;margin-bottom:.7rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.62rem .9rem;background:#fff;">
+        <div style="display:flex;align-items:center;gap:.5rem;flex:1;">
+          <span class="badge ${KASAN_ST_CLS[k.status]||'bx'}">⚠ ${k.status}</span>
+          <span style="font-weight:700;font-size:.8rem;">${k.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span style="font-size:.78rem;color:var(--gn);font-weight:700;">${k.amount}</span>
+          <button onclick="toggleKasanBody('kb-${i}')" style="background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--mu);">▼</button>
+          <button onclick="openKasanEdit(${i})" class="btn btn-ghost btn-sm no-print">✏️</button>
+        </div>
+      </div>
+      <div class="kasan-body" id="kb-${i}">
+        <div class="alert ai" style="margin:.7rem;font-size:.76rem;">📋 ${k.note}</div>
+        ${k.userNote?`<div style="margin:.3rem .7rem .7rem;padding:.42rem .6rem;background:var(--gop);border-radius:5px;font-size:.74rem;">📝 <strong>メモ：</strong>${k.userNote}</div>`:''}
+        <div style="padding:.5rem .7rem;display:flex;gap:.35rem;flex-wrap:wrap;">
+          ${['未取得','要確認','対応中','取得済'].map(st=>`<button onclick="setKasanStatus(${i},'${st}')" class="kasan-status-btn" style="border-color:${st===k.status?'var(--teal)':'var(--ln)'};background:${st===k.status?'var(--tp)':'#fff'};color:${st===k.status?'var(--teal)':'var(--mu)'};">${st}</button>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+function toggleKasanBody(id){document.getElementById(id)?.classList.toggle('open');}
+function openAddKasanModal(){
+  editKasanIdx=null;
+  document.getElementById('kasan-modal-title').textContent='＋ 加算項目を追加';
+  ['ke-name','ke-amount','ke-note','ke-usernote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ke-status').value='未取得';
+  document.getElementById('ke-idx').value='';
+  showModal('kasan-edit-modal');
+}
+function openKasanEdit(i){
+  editKasanIdx=i;const k=KASAN[i];
+  document.getElementById('kasan-modal-title').textContent='✏️ 加算項目を編集';
+  document.getElementById('ke-name').value=k.name;
+  document.getElementById('ke-amount').value=k.amount;
+  document.getElementById('ke-status').value=k.status;
+  document.getElementById('ke-note').value=k.note;
+  document.getElementById('ke-usernote').value=k.userNote||'';
+  document.getElementById('ke-idx').value=i;
+  showModal('kasan-edit-modal');
+}
+function saveKasanEdit(){
+  const idxVal=document.getElementById('ke-idx').value;
+  const entry={name:document.getElementById('ke-name').value,amount:document.getElementById('ke-amount').value,status:document.getElementById('ke-status').value,badge:KASAN_ST_CLS[document.getElementById('ke-status').value]||'bx',note:document.getElementById('ke-note').value,userNote:document.getElementById('ke-usernote').value,id:'k'+Date.now()};
+  if(idxVal===''){KASAN.push(entry);}
+  else{KASAN[parseInt(idxVal)]={...KASAN[parseInt(idxVal)],...entry};}
+  closeModal('kasan-edit-modal');renderKasan();saveKasanStorage();
+  showSuccess('保存しました','加算情報を更新しました。');
+}
+function deleteKasan(){
+  const i=parseInt(document.getElementById('ke-idx').value);
+  if(isNaN(i))return;
+  if(!confirm('この加算項目を削除しますか？'))return;
+  KASAN.splice(i,1);
+  closeModal('kasan-edit-modal');renderKasan();saveKasanStorage();
+  showSuccess('削除しました','加算項目を削除しました。');
+}
+function setKasanStatus(i,st){KASAN[i].status=st;renderKasan();saveKasanStorage();}
+function editKasanAlert(){
+  const cur=document.getElementById('kasan-alert').textContent.replace('✏️ 編集','').trim();
+  document.getElementById('ha-text').value=cur;
+  showModal('home-alert-modal');
+  // Reuse alert modal for kasan alert
+  document.getElementById('home-alert-modal').dataset.target='kasan';
+}
+async function saveKasanStorage(){try{await safeStorage.set('cocon-kasan-v2',JSON.stringify(KASAN));}catch(e){}}
+
+// ══════════════════════════════
+// 議事録 インライン編集
+// ══════════════════════════════
+let minutesEditMode=false;
+function toggleMinutesEdit(){
+  minutesEditMode=!minutesEditMode;
+  document.querySelectorAll('[contenteditable]').forEach(el=>{
+    el.contentEditable=minutesEditMode?'true':'false';
+    el.style.outline=minutesEditMode?'1.5px dashed var(--tl)':'';
+    el.style.borderRadius=minutesEditMode?'3px':'';
+    el.style.padding=minutesEditMode?'.1rem .2rem':'';
+  });
+  showSuccess(minutesEditMode?'編集モードON':'編集モードOFF',minutesEditMode?'テキストをクリックして直接編集できます。':'変更が保存されました。');
+}
+function editDecision(btn){
+  const span=btn.previousElementSibling;
+  span.contentEditable='true';
+  span.focus();
+  span.style.outline='1.5px solid var(--tl)';
+  span.style.borderRadius='3px';
+  span.style.padding='.1rem .2rem';
+  span.onblur=()=>{span.contentEditable='false';span.style.outline='';span.style.padding='';};
+}
+function addDecision(){
+  const container=document.getElementById('minutes-decisions');
+  const num=container.children.length+1;
+  const div=document.createElement('div');div.className='minutes-section';
+  div.innerHTML=`<strong>⓪</strong> <span contenteditable="true" class="me-decision" style="outline:1.5px solid var(--tl);border-radius:3px;padding:.1rem .2rem;">新しい決定事項を入力...</span><button class="minutes-edit-btn no-print" onclick="editDecision(this)">✏️</button>`;
+  div.querySelector('strong').textContent=`${['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][num-1]||num+'.'}`;
+  container.appendChild(div);
+  const span=div.querySelector('span');span.focus();
+  const range=document.createRange();range.selectNodeContents(span);
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+}
+function editMinutesSection(section){}
+function editMinutesMeta(idx){
+  const labels=['確認期間','出席率','記録作成'];
+  document.getElementById('mm-label').textContent=labels[idx];
+  document.getElementById('mm-value').value=document.getElementById('mm-'+idx).textContent;
+  document.getElementById('mm-idx').value=idx;
+  showModal('minutes-meta-modal');
+}
+function saveMinutesMeta(){
+  const idx=document.getElementById('mm-idx').value;
+  document.getElementById('mm-'+idx).textContent=document.getElementById('mm-value').value;
+  closeModal('minutes-meta-modal');
+}
+
+// ══════════════════════════════
+// ホームアラート編集
+// ══════════════════════════════
+function editHomeAlert(){
+  const cur=document.getElementById('home-alert-text').textContent.trim();
+  document.getElementById('ha-text').value=cur;
+  document.getElementById('home-alert-modal').dataset.target='home';
+  showModal('home-alert-modal');
+}
+function saveHomeAlert(){
+  const val=document.getElementById('ha-text').value;
+  const target=document.getElementById('home-alert-modal').dataset.target;
+  if(target==='kasan'){
+    const al=document.getElementById('kasan-alert');
+    al.innerHTML=val+' <button class="btn btn-ghost btn-sm no-print" style="margin-left:.5rem;" onclick="editKasanAlert()">✏️ 編集</button>';
+  } else {
+    document.getElementById('home-alert-text').innerHTML=val;
+  }
+  closeModal('home-alert-modal');
+}
+
+// ══════════════════════════════
+// アクティビティ
+// ══════════════════════════════
+function openActivityEdit(){showModal('activity-modal');}
+function saveActivity(){
+  const dt=document.getElementById('act-dt').value.trim();
+  const text=document.getElementById('act-text').value.trim();
+  const type=document.getElementById('act-type').value;
+  if(!text){alert('内容を入力してください');return;}
+  const list=document.getElementById('home-activity-list');
+  const div=document.createElement('div');div.className='tli';
+  div.innerHTML=`<div class="tld ${type}"></div><div class="tlt">${dt||'今'}</div><div class="tltx">${text}</div>`;
+  list.insertBefore(div,list.firstChild);
+  closeModal('activity-modal');
+  document.getElementById('act-dt').value='';document.getElementById('act-text').value='';
+}
+
+// ══════════════════════════════
+// 運営指導チェックリスト
+// ══════════════════════════════
+const SHIDO_CATS=[
+  {id:'I',label:'人員・設備基準',icon:'👥',color:'#1a6b6b',bg:'#e6f4f4',items:[
+    {id:'I-1',text:'管理者の配置（常勤・専従、または管理業務に支障がない範囲で兼務可）',ref:'基準省令§184',docs:'管理者の辞令・勤務形態一覧・管理業務内容確認'},
+    {id:'I-2',text:'サービス管理責任者の配置員数（利用者30人以下に1人以上）',ref:'基準省令§185',docs:'サビ管の資格証・辞令・勤務実績（欠如期間がないか確認）'},
+    {id:'I-3',text:'世話人・生活支援員の配置（利用者数に応じた員数、常勤換算）',ref:'基準省令§187',docs:'勤務形態一覧表（直近3ヶ月分）・常勤換算計算書'},
+    {id:'I-4',text:'夜間支援員の配置（夜間支援等体制加算取得事業所）',ref:'報酬告示',docs:'夜間支援員の配置記録・夜間支援計画書'},
+    {id:'I-5',text:'勤務形態一覧表の整備と常勤換算の正確な計算',ref:'基準省令§187',docs:'勤務形態一覧表（直近3ヶ月）・タイムカード等の根拠資料'},
+  ]},
+  {id:'II',label:'個別支援計画の作成・管理',icon:'📋',color:'#2a7040',bg:'#e4f2ea',items:[
+    {id:'II-1',text:'全利用者に対するアセスメントの実施（ニーズ・課題の把握）',ref:'基準省令§191',docs:'アセスメントシート（全利用者分）'},
+    {id:'II-2',text:'個別支援計画の作成（全利用者分・サービス管理責任者が作成）',ref:'基準省令§191',docs:'個別支援計画書（全利用者分・サビ管署名あり）'},
+    {id:'II-3',text:'利用者・保護者への内容説明・同意・署名取得（全利用者）',ref:'基準省令§191',docs:'署名入り個別支援計画書（全利用者・直近版）'},
+    {id:'II-4',text:'6ヶ月以内のモニタリング実施と計画の見直し（全利用者）',ref:'基準省令§191',docs:'モニタリング記録（前回作成日から6ヶ月以内か確認）'},
+    {id:'II-5',text:'個別支援会議（担当者会議）の開催と記録',ref:'基準省令§191',docs:'会議録・出席者署名・開催日（計画作成・更新時に実施）'},
+  ]},
+  {id:'III',label:'虐待防止・身体拘束廃止・権利擁護',icon:'🛡',color:'#b83030',bg:'#fde8e8',items:[
+    {id:'III-1',text:'虐待防止委員会の開催（年2回以上）と記録・出席者署名の保管',ref:'障害者虐待防止法§15 / 基準省令§184-2',docs:'委員会記録・出席者署名（今年度2回分）'},
+    {id:'III-2',text:'虐待防止責任者の設置と全スタッフへの周知',ref:'基準省令§184-2',docs:'責任者の辞令・周知記録（掲示・回覧等）'},
+    {id:'III-3',text:'虐待防止研修の実施（年2回以上・内部または外部）',ref:'基準省令§184-2',docs:'研修計画・受講記録・修了証（全スタッフ分・今年度2回）'},
+    {id:'III-4',text:'虐待を受けたと思われる利用者の通報義務・対応手順の周知',ref:'障害者虐待防止法§16',docs:'マニュアル・周知方法（掲示・研修等）の確認'},
+    {id:'III-5',text:'身体拘束廃止委員会の開催（年1回以上）と記録',ref:'基準省令§195',docs:'委員会記録・出席者署名（今年度1回以上）'},
+    {id:'III-6',text:'身体拘束発生時の記録・利用者・家族への説明・市区町村報告',ref:'基準省令§195',docs:'身体拘束記録・家族同意書・行政報告書（発生時のみ）'},
+    {id:'III-7',text:'苦情受付・対応体制の整備と受付記録の保管',ref:'基準省令§200',docs:'苦情受付窓口の掲示・受付記録・第三者委員名簿'},
+  ]},
+  {id:'IV',label:'感染症・事故対応',icon:'🏥',color:'#c05a10',bg:'#fef0e4',items:[
+    {id:'IV-1',text:'感染対策委員会の開催（年2回以上）と記録・出席者署名の保管',ref:'基準省令§198-2',docs:'委員会記録・出席者署名（今年度2回分）'},
+    {id:'IV-2',text:'感染症・食中毒発生時の対応マニュアルの整備（最新版）',ref:'基準省令§198-2',docs:'マニュアル（最終改訂日・嘔吐物処理手順含む）'},
+    {id:'IV-3',text:'感染症発生時の市区町村・保健所への報告体制',ref:'基準省令§198-2',docs:'報告フロー・担当者・連絡先一覧の整備確認'},
+    {id:'IV-4',text:'事故発生防止のための取り組みと定期的な見直し',ref:'基準省令§198',docs:'ヒヤリハット収集・集計・分析記録'},
+    {id:'IV-5',text:'事故発生時の対応手順・記録・家族報告・行政報告の実施',ref:'基準省令§198',docs:'事故報告書・家族への連絡記録・市区町村への報告書（該当時）'},
+  ]},
+  {id:'V',label:'業務継続計画（BCP）',icon:'🗂',color:'#5a3a8a',bg:'#ede8f8',items:[
+    {id:'V-1',text:'自然災害BCPの策定・定期的な見直し',ref:'基準省令§184-3',docs:'自然災害BCP文書（策定日・最終改訂日を確認）'},
+    {id:'V-2',text:'感染症BCPの策定・定期的な見直し',ref:'基準省令§184-3',docs:'感染症BCP文書（策定日・最終改訂日を確認）'},
+    {id:'V-3',text:'BCP訓練の実施（年2回以上、うち少なくとも1回は地域住民等と連携）',ref:'基準省令§184-3',docs:'訓練実施記録・参加者名簿（今年度2回分）'},
+  ]},
+  {id:'VI',label:'記録・書類管理',icon:'📁',color:'#4a5a6a',bg:'#f0ede6',items:[
+    {id:'VI-1',text:'重要事項説明書の整備・契約時の説明実施・同意・署名取得（全利用者）',ref:'基準省令§197',docs:'署名入り重要事項説明書（全利用者・最新版）'},
+    {id:'VI-2',text:'運営規程の整備と事業所内への掲示（変更時は届出）',ref:'基準省令§197',docs:'運営規程・掲示物の確認'},
+    {id:'VI-3',text:'内部・外部研修の計画と実施記録（全スタッフ分）',ref:'基準省令§184-2',docs:'年間研修計画・受講記録・修了証（スタッフ全員分）'},
+    {id:'VI-4',text:'サービス提供記録（日々の支援記録）の整備と保管',ref:'基準省令§202',docs:'支援記録（数名分の記録を抽出して確認）'},
+    {id:'VI-5',text:'利用者の金銭管理記録（金銭管理を行う場合）',ref:'基準省令§202',docs:'金銭出納帳・領収書（該当利用者のみ）'},
+  ]},
+  {id:'VII',label:'加算要件',icon:'💴',color:'#a07820',bg:'#faf0d8',items:[
+    {id:'VII-1',text:'福祉・介護職員処遇改善加算：賃金改善計画書・実績報告書・就業規則の整備',ref:'報酬告示',docs:'賃金改善計画書・実績報告書・就業規則・賃金規程'},
+    {id:'VII-2',text:'夜間支援等体制加算：夜間支援計画・夜間支援員の配置記録',ref:'報酬告示',docs:'夜間支援計画書・夜間勤務シフト・夜間支援員の資格確認'},
+    {id:'VII-3',text:'重度障害者支援加算：対象利用者の障害支援区分・スタッフの研修修了証',ref:'報酬告示',docs:'利用者の障害支援区分一覧・強度行動障害支援者養成研修修了証'},
+    {id:'VII-4',text:'福祉専門職員配置等加算：有資格者の配置割合・常勤換算計算',ref:'報酬告示',docs:'資格証コピー・常勤換算計算書（有資格者の割合確認）'},
+  ]},
+];
+let shidoState={};
+const ST_CYCLE=['','✓','△','✗','—'];
+const ST_CLS={'':'st-none','✓':'st-ok','△':'st-warn','✗':'st-bad','—':'st-na'};
+const ST_LBL={'':'未確認','✓':'済','△':'要対応','✗':'未対応','—':'該当なし'};
+
+function renderShido(){
+  const body=document.getElementById('shido-body');if(!body)return;
+  let h='';
+  SHIDO_CATS.forEach(cat=>{
+    const items=cat.items;
+    const done=items.filter(it=>(shidoState[it.id]||{}).status==='✓').length;
+    const bad=items.filter(it=>['△','✗'].includes((shidoState[it.id]||{}).status)).length;
+    const pct=Math.round(done/items.length*100);
+    h+=`<div class="shido-cat" style="border-color:${cat.color}20;">
+      <div class="shido-cat-head" style="background:${cat.bg};" onclick="toggleCat('sc-${cat.id}')">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span style="font-size:1rem;">${cat.icon}</span>
+          <span style="color:${cat.color};">${cat.id}.</span>
+          <span>${cat.label}</span>
+          ${bad>0?`<span class="badge br" style="font-size:.56rem;">要対応 ${bad}件</span>`:''}
+        </div>
+        <div class="shido-cat-stats">
+          <div class="pbar-w"><div class="pbar" style="width:58px;"><div class="pbar-f" style="width:${pct}%;background:${cat.color};"></div></div><span style="font-size:.6rem;color:${cat.color};font-weight:700;">${done}/${items.length}</span></div>
+          <span style="font-size:.7rem;color:var(--mu);">▼</span>
+        </div>
+      </div>
+      <div class="shido-cat-body" id="sc-${cat.id}">
+        ${items.map(it=>renderShidoItem(it,cat.color)).join('')}
+      </div>
+    </div>`;
+  });
+  body.innerHTML=h;
+  updateShidoStats();
+}
+function renderShidoItem(item,color){
+  const st=shidoState[item.id]||{status:'',memo:''};
+  return `<div class="shido-item" id="sii-${item.id}">
+    <button class="st-btn ${ST_CLS[st.status]}" onclick="cycleStatus('${item.id}')" title="${ST_LBL[st.status]}">${st.status||'□'}</button>
+    <div class="si-wrap">
+      <div class="si-text">${item.text}</div>
+      <div class="si-meta">
+        <span class="si-ref">${item.ref}</span>
+        <span class="si-docs" onclick="toggleMemo('${item.id}')">📄 確認書類・メモ</span>
+        ${st.memo?`<span style="font-size:.62rem;color:var(--am);">📝 メモあり</span>`:''}
+      </div>
+      <div class="si-memo-area" id="sm-${item.id}">
+        <div class="si-docs-full">📋 確認書類：${item.docs}</div>
+        <textarea class="si-memo-in" placeholder="メモ・改善事項・担当者名など..." onchange="updateMemo('${item.id}',this.value)">${st.memo||''}</textarea>
+      </div>
+    </div>
+  </div>`;
+}
+function cycleStatus(id){
+  const cur=shidoState[id]||{status:'',memo:''};
+  const idx=ST_CYCLE.indexOf(cur.status);
+  const next=ST_CYCLE[(idx+1)%ST_CYCLE.length];
+  shidoState[id]={...cur,status:next};
+  const item=document.getElementById('sii-'+id);
+  if(item){const btn=item.querySelector('.st-btn');btn.className=`st-btn ${ST_CLS[next]}`;btn.textContent=next||'□';btn.title=ST_LBL[next];}
+  saveShidoStorage();updateShidoStats();
+}
+function updateMemo(id,val){shidoState[id]={...(shidoState[id]||{status:''}),memo:val};saveShidoStorage();}
+function toggleMemo(id){document.getElementById('sm-'+id)?.classList.toggle('open');}
+function toggleCat(id){const el=document.getElementById(id);if(el)el.style.display=el.style.display==='none'?'':'none';}
+function updateShidoStats(){
+  let ok=0,bad=0,warn=0,none=0;
+  SHIDO_CATS.forEach(cat=>cat.items.forEach(it=>{
+    const s=(shidoState[it.id]||{}).status||'';
+    if(s==='✓')ok++;else if(s==='✗')bad++;else if(s==='△')warn++;else none++;
+  }));
+  const total=34;const pct=Math.round(ok/total*100);
+  const el=n=>document.getElementById(n);
+  if(el('sh-ok'))el('sh-ok').textContent=ok;
+  if(el('sh-bad'))el('sh-bad').textContent=bad;
+  if(el('sh-warn'))el('sh-warn').textContent=warn;
+  if(el('sh-none'))el('sh-none').textContent=none;
+  if(el('sh-pct'))el('sh-pct').textContent=pct+'%';
+  if(el('sh-progress'))el('sh-progress').style.width=pct+'%';
+  const issues=bad+warn;
+  const sb=document.getElementById('sb-shido-badge');
+  if(sb){sb.textContent=issues>0?issues:'';sb.style.display=issues>0?'':'none';}
+  const hsc=document.getElementById('shido-issue-cnt');if(hsc)hsc.textContent=issues;
+  const hs=document.getElementById('home-shido-summary');
+  if(hs&&(ok>0||bad>0||warn>0)){
+    hs.innerHTML=`<div style="margin-bottom:.5rem;"><div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:.25rem;"><span>準備完了率</span><span style="font-weight:700;color:var(--gn);">${pct}%</span></div><div class="shido-progress-bar"><div class="shido-progress-fill" style="width:${pct}%;"></div></div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.35rem;margin-top:.5rem;">${[['済',ok,'var(--gn)'],['要対応',warn,'var(--am)'],['未対応',bad,'var(--rd)']].map(([l,v,c])=>`<div style="text-align:center;padding:.35rem;border:1px solid var(--ln);border-radius:4px;"><div style="font-size:1.1rem;font-weight:700;color:${c};">${v}</div><div style="font-size:.6rem;color:var(--mu);">${l}</div></div>`).join('')}</div>`;
+  }
+  buildShidoIssues(bad,warn);
+}
+function buildShidoIssues(bad,warn){
+  const wrap=document.getElementById('shido-issues-wrap');
+  const list=document.getElementById('shido-issues-list');
+  const cnt=document.getElementById('shido-issues-cnt');
+  if(!wrap||!list)return;
+  const issues=[];
+  SHIDO_CATS.forEach(cat=>cat.items.forEach(it=>{
+    const s=(shidoState[it.id]||{}).status;
+    if(s==='✗'||s==='△')issues.push({...it,status:s,cat:cat.label});
+  }));
+  if(issues.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  if(cnt)cnt.textContent=`${issues.length}件`;
+  list.innerHTML=issues.map(it=>`<div class="${it.status==='✗'?'shido-issue':'shido-warn'}">
+    <span style="font-size:.82rem;">${it.status==='✗'?'✗':'△'}</span>
+    <div>
+      <div style="font-weight:700;margin-bottom:.15rem;">${it.cat} ｜ ${it.text}</div>
+      <div style="font-size:.66rem;color:var(--mu);">確認書類：${it.docs}</div>
+      ${(shidoState[it.id]||{}).memo?`<div style="font-size:.7rem;color:var(--am);margin-top:.2rem;">📝 ${shidoState[it.id].memo}</div>`:''}
+    </div>
+  </div>`).join('');
+}
+function filterShido(mode){
+  SHIDO_CATS.forEach(cat=>{
+    cat.items.forEach(it=>{
+      const el=document.getElementById('sii-'+it.id);if(!el)return;
+      const s=(shidoState[it.id]||{}).status||'';
+      if(mode==='all')el.style.display='';
+      else if(mode==='issue')el.style.display=['△','✗'].includes(s)?'':'none';
+      else if(mode==='unchecked')el.style.display=s===''?'':'none';
+    });
+  });
+}
+async function saveShidoStorage(){try{await safeStorage.set('cocon-shido-v2',JSON.stringify(shidoState));}catch(e){}}
+
+// ══════════════════════════════
+// NAV
+// ══════════════════════════════
+const TITLES={home:'ダッシュボード','staff-mgmt':'スタッフ管理','staff-confirm':'スタッフ確認画面','ai-gen':'AI資料生成',meetings:'非同期会議',kijitsu:'期日管理',hiyari:'ヒヤリハット管理','hiyari-new':'ヒヤリハット報告',kasan:'加算取得チェッカー',shido:'運営指導チェック',output:'議事録出力',history:'記録アーカイブ',keiei:'経営ダッシュボード',residents:'利用者詳細管理',diary:'日誌・記録',shift:'シフト管理',bcp:'BCP・緊急連絡',settings:'設定'};
+function go(id,el){
+  document.querySelectorAll('.pv').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  const pv=document.getElementById('pv-'+id);if(!pv)return;
+  pv.classList.add('active');
+  document.getElementById('tb-title').textContent=TITLES[id]||id;
+  if(el)el.classList.add('active');
+  else document.querySelectorAll('.sb-item').forEach(b=>{if(b.getAttribute('onclick')?.includes("'"+id+"'"))b.classList.add('active');});
+  if(id==='kijitsu'){calcKjStats();renderKijitsu('全施設');}
+  if(id==='shido')renderShido();
+  if(id==='hiyari')renderHiyari();
+  if(id==='meetings')renderMeetings();
+  if(id==='history')renderHistory();
+  if(id==='kasan')renderKasan();
+  if(id==='keiei')renderKeiei();
+  if(id==='residents')renderResidents();
+  if(id==='diary')renderDiary();
+  if(id==='shift')renderShift();
+  if(id==='bcp')renderBcp();
+  if(id==='settings')loadSettings();
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════
+// AI GEN
+// ══════════════════════════════
+function onType(){const t=document.getElementById('g-type').value;['abuse','infection','restraint','support'].forEach(k=>document.getElementById('ex-'+k).style.display=k===t?'block':'none');}
+function setStep(n){for(let i=1;i<=4;i++){const s=document.getElementById('gstep'+i);s.className='step'+(i<n?' done':i===n?' active':'');}}
+async function startGen(){
+  const type=document.getElementById('g-type').value;
+  const ward=document.getElementById('g-ward').value;
+  const round=document.getElementById('g-round').value||'第　回';
+  const prev=document.getElementById('g-prev').value;
+  const extra=document.getElementById('g-extra').value;
+  if(!type){alert('委員会の種類を選択してください');return;}
+  const members=STAFF.filter(s=>s.fac===ward||ward==='全事業所合同').map(s=>s.name).join('・')||'（スタッフ未登録）';
+  const tnames={abuse:'虐待防止委員会',infection:'感染対策委員会',restraint:'身体拘束廃止委員会',support:'個別支援会議'};
+  document.getElementById('gs1').style.display='none';document.getElementById('gs2').style.display='block';
+  document.getElementById('gen-loading').style.display='flex';document.getElementById('gen-out').style.display='none';
+  document.getElementById('gs2-actions').style.display='none';document.getElementById('gs3').style.display='none';
+  setStep(2);
+  document.getElementById('gen-label').textContent=`${tnames[type]} ${ward} ${round}`;
+  const prompt=`株式会社COCONのグループホーム${ward}（${round}）の${tnames[type]}資料を作成してください。 参加スタッフ：${members} 前回決定事項：${prev||'なし'}　追加検討：${extra||'なし'} ■ 議題一覧（3〜4項目） ■ 各議題の審議内容（具体的に・箇条書き） ■ 決定事項案（担当者名・期限付き） ■ 次回に向けた申し送り`;
+  const outDiv=document.getElementById('gen-text');outDiv.textContent='';outDiv.classList.add('cursor');
+  try{
+    const apiKey=getApiKey();
+    if(!apiKey){throw new Error('APIキー未設定');}
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:1000,stream:true,messages:[{role:'user',content:prompt}]})});
+    document.getElementById('gen-loading').style.display='none';document.getElementById('gen-out').style.display='block';
+    const reader=res.body.getReader();const dec=new TextDecoder();let full='';
+    while(true){const{done,value}=await reader.read();if(done)break;const lines=dec.decode(value).split('\n');for(const l of lines){if(!l.startsWith('data: '))continue;const d=l.slice(6);if(d==='[DONE]')continue;try{const j=JSON.parse(d);if(j.type==='content_block_delta'&&j.delta?.text){full+=j.delta.text;outDiv.textContent=full;}}catch(e){}}}
+    outDiv.classList.remove('cursor');document.getElementById('gen-edit').value=full;document.getElementById('gs2-actions').style.display='block';setStep(3);
+  }catch(e){
+    document.getElementById('gen-loading').style.display='none';document.getElementById('gen-out').style.display='block';
+    const fb=`■ 議題一覧\n【議題１】前回決定事項の進捗確認\n【議題２】ヒヤリハット振り返りと再発防止策\n【議題３】研修・マニュアルの確認\n\n■ 決定事項案\n1. 各担当者が期限内に対応事項を実施する`;
+    let i=0;const iv=setInterval(()=>{if(i>=fb.length){clearInterval(iv);outDiv.classList.remove('cursor');document.getElementById('gen-edit').value=fb;document.getElementById('gs2-actions').style.display='block';setStep(3);return;}outDiv.textContent=fb.slice(0,i+=4);},12);
+  }
+}
+function gs2Show(){document.getElementById('gs3').style.display='none';document.getElementById('gs2').style.display='block';}
+function goDist(){document.getElementById('gs2').style.display='none';document.getElementById('gs3').style.display='block';setStep(3);}
+function distribute(){document.getElementById('gs3').style.display='none';setStep(4);showSuccess('スタッフへ配信しました','登録スタッフへ通知を送信しました。確認・署名完了後、議事録が自動生成されます。');}
+
+// ══════════════════════════════
+// SIGN
+// ══════════════════════════════
+const canvas=document.getElementById('sc');const ctx=canvas?.getContext('2d');let signing=false,hasSig=false;
+if(ctx){ctx.strokeStyle='#1a6b6b';ctx.lineWidth=2;ctx.lineCap='round';}
+function gp(e){const r=canvas.getBoundingClientRect();const sx=canvas.width/r.width;const sy=canvas.height/r.height;if(e.touches)return{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy};return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+if(canvas){
+  canvas.addEventListener('mousedown',e=>{signing=true;const p=gp(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('mousemove',e=>{if(!signing)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();if(!hasSig){hasSig=true;document.getElementById('sw').classList.add('signed');}});
+  canvas.addEventListener('mouseup',()=>signing=false);
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();signing=true;const p=gp(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!signing)return;const p=gp(e);ctx.lineTo(p.x,p.y);ctx.stroke();if(!hasSig){hasSig=true;document.getElementById('sw').classList.add('signed');}},{passive:false});
+  canvas.addEventListener('touchend',()=>signing=false);
+}
+function clearSign(){if(ctx)ctx.clearRect(0,0,canvas.width,canvas.height);hasSig=false;document.getElementById('sw')?.classList.remove('signed');}
+function submitSign(){if(!hasSig){alert('署名を入力してください');return;}document.getElementById('signed-banner').style.display='block';const btn=document.getElementById('sign-btn');btn.textContent='✓ 送信済み';btn.disabled=true;btn.style.background='#aaa';window.scrollTo({top:0,behavior:'smooth'});}
+
+// ══════════════════════════════
+// UTILS
+// ══════════════════════════════
+function showModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showSuccess(t,b){document.getElementById('suc-title').textContent=t;document.getElementById('suc-body').textContent=b;showModal('success-modal');}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+(async()=>{
+  try{const r=await safeStorage.get('cocon-staff-v2');if(r)STAFF=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-shido-v2');if(r)shidoState=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-res-v2');if(r)RES=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-hiyari-v2');if(r)HIYARI=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-meetings-v2');if(r)MEETINGS=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-history-v2');if(r)HISTORY=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-kasan-v2');if(r)KASAN=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-keiei');if(r)KEIEI_DATA=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-diary');if(r)DIARY=JSON.parse(r.value);}catch(e){}
+  try{const r=await safeStorage.get('cocon-bcp');if(r){const d=JSON.parse(r.value);if(d.contacts)BCP_CONTACTS=d.contacts;if(d.shelters)BCP_SHELTERS=d.shelters;}}catch(e){}
+  try{const r=await safeStorage.get('cocon-residents-detail');if(r)RESIDENTS_DETAIL=JSON.parse(r.value);}catch(e){}
+  const dd=document.getElementById('g-deadline');if(dd){const d=new Date();d.setDate(d.getDate()+14);dd.value=d.toISOString().split('T')[0];}
+  rebuildFacUI();
+  renderStaff();
+  buildHomeKj();buildFacSum();calcKjStats();
+  updateShidoStats();
+  renderHiyari();
+  renderMeetings();
+  renderHistory();
+  renderKasan();
+  renderKeiei();
+  loadSettings();
+  const sb=document.getElementById('sb-shido-badge');if(sb)sb.style.display='none';
+  setupRealtimeSync();
+})();
+</script>
+</body>
+</html>
