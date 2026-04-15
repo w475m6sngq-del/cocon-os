@@ -807,6 +807,18 @@ tr:hover .arch-edit-btn{opacity:1;}
     </div>
   </div>
   <div class="card">
+    <div class="ch"><div class="ch-title">🔒 経営ダッシュボード パスワード</div></div>
+    <div class="cb">
+      <div class="fg"><label class="fl">パスワード</label>
+        <input class="fi" id="keiei-pw-setting" type="password" placeholder="現在のパスワード: cocon2024"></div>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+        <button class="btn btn-primary" onclick="saveKeieiPw()">✓ 変更</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('keiei-pw-setting').type=document.getElementById('keiei-pw-setting').type==='password'?'text':'password'">👁 表示</button>
+      </div>
+      <div id="keiei-pw-status" style="font-size:.74rem;margin-top:.4rem;"></div>
+    </div>
+  </div>
+  <div class="card">
     <div class="ch"><div class="ch-title">☁️ Supabase 同期設定</div><span id="sync-dot-settings" style="font-size:1rem;"></span></div>
     <div class="cb">
       <div class="alert ai" style="font-size:.76rem;">URLと匿名キーを設定すると、スタッフ全員が同じデータをリアルタイムで共有できます。</div>
@@ -1294,6 +1306,24 @@ CREATE POLICY "allow_all" ON app_data
 </div>
 
 <!-- 共通モーダル -->
+<!-- 経営ダッシュボード 認証モーダル -->
+<div class="overlay" id="keiei-lock-modal">
+  <div class="modal" style="max-width:340px;">
+    <div class="mh"><div class="mt">🔒 経営ダッシュボード</div></div>
+    <div class="mb" style="padding:1.5rem 1.3rem;">
+      <div style="font-size:.8rem;color:var(--mu);margin-bottom:1rem;">このページは管理者専用です。パスワードを入力してください。</div>
+      <input class="fi" id="keiei-pw-input" type="password" placeholder="パスワード"
+        onkeydown="if(event.key==='Enter')checkKeieiPw()"
+        style="font-size:1rem;padding:.65rem .75rem;">
+      <div id="keiei-pw-err" style="color:var(--rd);font-size:.74rem;margin-top:.4rem;min-height:1rem;"></div>
+    </div>
+    <div class="mf" style="gap:.5rem;">
+      <button class="btn btn-ghost" onclick="closeModal('keiei-lock-modal')">キャンセル</button>
+      <button class="btn btn-primary" onclick="checkKeieiPw()">🔓 開く</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="remind-modal" onclick="if(event.target===this)closeModal('remind-modal')">
   <div class="modal">
     <div class="mh"><div class="mt">📣 リマインド送信</div><button class="mc" onclick="closeModal('remind-modal')">✕</button></div>
@@ -1945,6 +1975,15 @@ function loadSettings(){
   const ai=document.getElementById('sb-anon-input');if(ai&&sbAnon)ai.value=sbAnon;
   const sm=document.getElementById('sb-status-msg');
   if(sm)sm.innerHTML=sbUrl?'<span style="color:var(--gn)">✓ 設定済み（接続状態はドット🟢を確認）</span>':'';
+}
+function saveKeieiPw(){
+  const pw=(document.getElementById('keiei-pw-setting').value||'').trim();
+  const st=document.getElementById('keiei-pw-status');
+  if(!pw){if(st)st.innerHTML='<span style="color:var(--rd)">❌ パスワードを入力してください</span>';return;}
+  localStorage.setItem('cocon-keiei-pw',pw);
+  document.getElementById('keiei-pw-setting').value='';
+  if(st)st.innerHTML='<span style="color:var(--gn)">✓ 変更しました</span>';
+  _keieiUnlocked=false;
 }
 function saveSupabaseSettings(){
   const url=(document.getElementById('sb-url-input').value||'').trim();
@@ -3005,7 +3044,45 @@ async function saveShidoStorage(){try{await safeStorage.set('cocon-shido-v2',JSO
 // NAV
 // ══════════════════════════════
 const TITLES={home:'ダッシュボード','staff-mgmt':'スタッフ管理','staff-confirm':'スタッフ確認画面','ai-gen':'AI資料生成',meetings:'非同期会議',kijitsu:'期日管理',hiyari:'ヒヤリハット管理','hiyari-new':'ヒヤリハット報告',kasan:'加算取得チェッカー',shido:'運営指導チェック',output:'議事録出力',history:'記録アーカイブ',keiei:'経営ダッシュボード',residents:'利用者詳細管理',diary:'日誌・記録',shift:'シフト管理',bcp:'BCP・緊急連絡',settings:'設定'};
+let _keieiUnlocked=false;
+let _pendingKeieiEl=null;
+function checkKeieiPw(){
+  const pw=document.getElementById('keiei-pw-input').value;
+  const stored=localStorage.getItem('cocon-keiei-pw')||'cocon2024';
+  if(pw===stored){
+    _keieiUnlocked=true;
+    document.getElementById('keiei-pw-input').value='';
+    document.getElementById('keiei-pw-err').textContent='';
+    closeModal('keiei-lock-modal');
+    goKeiei(_pendingKeieiEl);
+  }else{
+    document.getElementById('keiei-pw-err').textContent='パスワードが違います';
+    document.getElementById('keiei-pw-input').value='';
+    document.getElementById('keiei-pw-input').focus();
+  }
+}
+function goKeiei(el){
+  document.querySelectorAll('.pv').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  const pv=document.getElementById('pv-keiei');if(pv)pv.classList.add('active');
+  document.getElementById('tb-title').textContent=TITLES['keiei']||'経営ダッシュボード';
+  if(el)el.classList.add('active');
+  renderKeiei();
+}
 function go(id,el){
+  if(id==='keiei'){
+    if(!_keieiUnlocked){
+      _pendingKeieiEl=el;
+      document.getElementById('keiei-pw-err').textContent='';
+      document.getElementById('keiei-pw-input').value='';
+      showModal('keiei-lock-modal');
+      setTimeout(()=>document.getElementById('keiei-pw-input').focus(),100);
+      return;
+    }
+    goKeiei(el);
+    return;
+  }
+  _keieiUnlocked=false; // 他のページに移動したらロック
   document.querySelectorAll('.pv').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   const pv=document.getElementById('pv-'+id);if(!pv)return;
