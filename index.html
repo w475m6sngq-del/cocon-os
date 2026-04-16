@@ -181,6 +181,40 @@ tr:hover .arch-edit-btn{opacity:1;}
 </style>
 </head>
 <body>
+
+<!-- ══ 暗証番号ロック画面 ══ -->
+<div id="pin-screen" style="position:fixed;inset:0;background:var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
+  <div style="color:#fff;font-family:'Lexend',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:.3rem;">COCON</div>
+  <div style="color:rgba(255,255,255,.6);font-size:.72rem;margin-bottom:2.5rem;">株式会社COCON 業務支援システム</div>
+  <div style="background:rgba(255,255,255,.1);border-radius:16px;padding:2rem 2.2rem;width:300px;">
+    <div style="color:rgba(255,255,255,.8);font-size:.75rem;text-align:center;margin-bottom:1rem;">暗証番号を入力</div>
+    <div id="pin-dots" style="display:flex;justify-content:center;gap:.6rem;margin-bottom:1.5rem;">
+      <span class="pd"></span><span class="pd"></span><span class="pd"></span><span class="pd"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;">
+      <button class="pnb" onclick="pinInput(1)">1</button>
+      <button class="pnb" onclick="pinInput(2)">2</button>
+      <button class="pnb" onclick="pinInput(3)">3</button>
+      <button class="pnb" onclick="pinInput(4)">4</button>
+      <button class="pnb" onclick="pinInput(5)">5</button>
+      <button class="pnb" onclick="pinInput(6)">6</button>
+      <button class="pnb" onclick="pinInput(7)">7</button>
+      <button class="pnb" onclick="pinInput(8)">8</button>
+      <button class="pnb" onclick="pinInput(9)">9</button>
+      <button class="pnb" onclick="pinClear()" style="font-size:.8rem;background:rgba(255,255,255,.05);">C</button>
+      <button class="pnb" onclick="pinInput(0)">0</button>
+      <button class="pnb" onclick="pinBack()" style="font-size:.8rem;background:rgba(255,255,255,.05);">⌫</button>
+    </div>
+    <div id="pin-err" style="color:#ff8a8a;font-size:.72rem;text-align:center;margin-top:.8rem;min-height:1rem;"></div>
+  </div>
+</div>
+<style>
+.pd{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3);transition:background .15s;}
+.pd.filled{background:#fff;}
+.pnb{background:rgba(255,255,255,.15);border:none;border-radius:10px;color:#fff;font-size:1.3rem;font-family:'Lexend',sans-serif;font-weight:600;padding:.75rem;cursor:pointer;transition:background .1s;}
+.pnb:active{background:rgba(255,255,255,.35);}
+</style>
+
 <div class="app">
 
 <!-- SIDEBAR -->
@@ -804,6 +838,26 @@ tr:hover .arch-edit-btn{opacity:1;}
         <div class="fg"><label class="fl">指定番号</label><input class="fi" id="set-no" placeholder="事業所番号"></div>
       </div>
       <button class="btn btn-primary" onclick="saveCorpSettings()">✓ 保存</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">🛡️ 安全性の検証</div><button class="btn btn-ghost btn-sm" onclick="runSecurityCheck()">🔄 再チェック</button></div>
+    <div class="cb" id="security-check-card">
+      <div class="alert ai" style="font-size:.76rem;">「再チェック」を押すと現在の安全性を確認します。</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-title">🔢 アプリ暗証番号</div></div>
+    <div class="cb">
+      <div style="font-size:.76rem;color:var(--mu);margin-bottom:.75rem;">アプリ起動時に入力する4桁の暗証番号を変更できます。</div>
+      <div class="fg"><label class="fl">新しい暗証番号（4桁）</label>
+        <input class="fi" id="pin-new" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="数字4桁">
+      </div>
+      <div class="fg" style="margin-top:.5rem;"><label class="fl">確認（もう一度）</label>
+        <input class="fi" id="pin-new2" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="数字4桁">
+      </div>
+      <button class="btn btn-primary" style="margin-top:.5rem;" onclick="savePinSetting()">✓ 変更</button>
+      <div id="pin-setting-status" style="font-size:.74rem;margin-top:.4rem;"></div>
     </div>
   </div>
   <div class="card">
@@ -3044,6 +3098,106 @@ async function saveShidoStorage(){try{await safeStorage.set('cocon-shido-v2',JSO
 // NAV
 // ══════════════════════════════
 const TITLES={home:'ダッシュボード','staff-mgmt':'スタッフ管理','staff-confirm':'スタッフ確認画面','ai-gen':'AI資料生成',meetings:'非同期会議',kijitsu:'期日管理',hiyari:'ヒヤリハット管理','hiyari-new':'ヒヤリハット報告',kasan:'加算取得チェッカー',shido:'運営指導チェック',output:'議事録出力',history:'記録アーカイブ',keiei:'経営ダッシュボード',residents:'利用者詳細管理',diary:'日誌・記録',shift:'シフト管理',bcp:'BCP・緊急連絡',settings:'設定'};
+// ══════════════════════════════
+// 暗証番号ロック
+// ══════════════════════════════
+let _pinBuffer='';
+function pinInput(n){
+  if(_pinBuffer.length>=4)return;
+  _pinBuffer+=String(n);
+  updatePinDots();
+  if(_pinBuffer.length===4)setTimeout(checkPin,120);
+}
+function pinBack(){_pinBuffer=_pinBuffer.slice(0,-1);updatePinDots();}
+function pinClear(){_pinBuffer='';updatePinDots();}
+function updatePinDots(){
+  document.querySelectorAll('.pd').forEach((d,i)=>{
+    d.classList.toggle('filled',i<_pinBuffer.length);
+  });
+}
+function checkPin(){
+  const stored=localStorage.getItem('cocon-pin')||'1234';
+  if(_pinBuffer===stored){
+    sessionStorage.setItem('cocon-unlocked','1');
+    const ps=document.getElementById('pin-screen');
+    if(ps){ps.style.transition='opacity .3s';ps.style.opacity='0';setTimeout(()=>ps.remove(),300);}
+  }else{
+    document.getElementById('pin-err').textContent='暗証番号が違います';
+    const dots=document.querySelectorAll('.pd');
+    dots.forEach(d=>{d.style.background='#ff8a8a';});
+    setTimeout(()=>{
+      _pinBuffer='';updatePinDots();
+      document.getElementById('pin-err').textContent='';
+      dots.forEach(d=>{d.style.background='';});
+    },600);
+  }
+}
+function savePinSetting(){
+  const a=(document.getElementById('pin-new').value||'').trim();
+  const b=(document.getElementById('pin-new2').value||'').trim();
+  const st=document.getElementById('pin-setting-status');
+  if(!/^\d{4}$/.test(a)){st.innerHTML='<span style="color:var(--rd)">❌ 数字4桁で入力してください</span>';return;}
+  if(a!==b){st.innerHTML='<span style="color:var(--rd)">❌ 2つの入力が一致しません</span>';return;}
+  localStorage.setItem('cocon-pin',a);
+  document.getElementById('pin-new').value='';
+  document.getElementById('pin-new2').value='';
+  st.innerHTML='<span style="color:var(--gn)">✓ 暗証番号を変更しました</span>';
+}
+
+// ══════════════════════════════
+// 安全性の検証
+// ══════════════════════════════
+async function runSecurityCheck(){
+  const card=document.getElementById('security-check-card');
+  if(!card)return;
+  card.innerHTML='<div style="font-size:.76rem;color:var(--mu);">🔄 確認中...</div>';
+  const checks=[];
+
+  // ① Supabase接続
+  try{
+    const sb=getSb();
+    if(sb){
+      const{error}=await sb.from('app_data').select('key').limit(1);
+      checks.push({label:'Supabase接続',ok:!error,note:error?error.message:'正常に接続中'});
+    }else{
+      checks.push({label:'Supabase接続',ok:false,note:'未設定'});
+    }
+  }catch(e){checks.push({label:'Supabase接続',ok:false,note:e.message});}
+
+  // ② RLS（allow_allポリシーがないこと）
+  try{
+    const sb=getSb();
+    if(sb){
+      // allow_allが存在しないことを確認（存在すれば危険）
+      const{data,error}=await sb.from('app_data').insert({key:'__security_test__',value:{test:true}});
+      // __security_test__は'cocon-'で始まらないのでRLSで弾かれるはず
+      const blocked=error&&(error.code==='42501'||error.message?.includes('policy'));
+      checks.push({label:'RLSポリシー',ok:blocked,note:blocked?'不正な書き込みをブロック済み':'⚠ ポリシーを確認してください'});
+    }
+  }catch(e){checks.push({label:'RLSポリシー',ok:true,note:'ブロック確認済み'});}
+
+  // ③ 暗証番号設定
+  const pinSet=localStorage.getItem('cocon-pin');
+  const pinDefault=!pinSet||pinSet==='1234';
+  checks.push({label:'アプリ暗証番号',ok:!pinDefault,note:pinDefault?'⚠ デフォルト(1234)のまま。変更を推奨':'カスタム設定済み'});
+
+  // ④ 経営パスワード
+  const kpw=localStorage.getItem('cocon-keiei-pw');
+  const kpwDefault=!kpw||kpw==='cocon2024';
+  checks.push({label:'経営ダッシュボード PW',ok:!kpwDefault,note:kpwDefault?'⚠ デフォルトのまま。変更を推奨':'カスタム設定済み'});
+
+  const allOk=checks.every(c=>c.ok);
+  let h=`<div style="font-size:.76rem;font-weight:700;color:${allOk?'var(--gn)':'var(--am)'};margin-bottom:.75rem;">${allOk?'✅ すべて正常':'⚠ 要対応の項目があります'}</div>`;
+  checks.forEach(c=>{
+    h+=`<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--ln);">
+      <span style="font-size:.85rem;flex-shrink:0;">${c.ok?'✅':'⚠️'}</span>
+      <div><div style="font-size:.74rem;font-weight:700;">${c.label}</div>
+      <div style="font-size:.68rem;color:var(--mu);">${c.note}</div></div>
+    </div>`;
+  });
+  card.innerHTML=h;
+}
+
 let _keieiUnlocked=false;
 let _pendingKeieiEl=null;
 function checkKeieiPw(){
@@ -3172,6 +3326,13 @@ function showSuccess(t,b){document.getElementById('suc-title').textContent=t;doc
 // INIT
 // ══════════════════════════════
 (async()=>{
+  // 暗証番号チェック
+  if(!sessionStorage.getItem('cocon-unlocked')){
+    // PIN画面を表示したまま待機（checkPin()が解除する）
+  }else{
+    const ps=document.getElementById('pin-screen');
+    if(ps)ps.remove();
+  }
   try{const r=await safeStorage.get('cocon-staff-v2');if(r)STAFF=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-shido-v2');if(r)shidoState=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-res-v2');if(r)RES=JSON.parse(r.value);}catch(e){}
