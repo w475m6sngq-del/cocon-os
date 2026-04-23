@@ -1192,6 +1192,10 @@ CREATE POLICY "allow_all" ON app_data
       </div>
       <div id="rd-tab-content-basic">
         <div class="fr2">
+          <div class="fg"><label class="fl">氏名</label><input class="fi" id="rd-name-input" placeholder="氏名"></div>
+          <div class="fg"><label class="fl">生年月日</label><input class="fi" type="date" id="rd-dob-input"></div>
+        </div>
+        <div class="fr2">
           <div class="fg"><label class="fl">障害種別</label>
             <select class="fi fsel" id="rd-disability">
               <option value="">未設定</option><option>知的障害</option><option>精神障害</option><option>身体障害</option><option>重複障害（知的＋精神）</option><option>重複障害（知的＋身体）</option><option>高次脳機能障害</option><option>発達障害</option>
@@ -1698,6 +1702,9 @@ function openResidentDetail(idx){
   document.getElementById('rd-name').textContent=name;
   document.getElementById('rd-fac').textContent=r[0];
   document.getElementById('rd-tab-basic').click();
+  document.getElementById('rd-name-input').value=name;
+  const dobRaw=r[2]||'';
+  document.getElementById('rd-dob-input').value=dobRaw==='—'?'':dobRaw;
   document.getElementById('rd-disability').value=d.disabilityType||'';
   document.getElementById('rd-level').value=d.supportLevel||'';
   document.getElementById('rd-finance-balance').value=d.finance?d.finance.balance||'':'';
@@ -1744,9 +1751,19 @@ function deleteMed(i){
 }
 function saveResidentDetail(){
   const r=RES[currentResidentIdx];
-  const rname=r[1];
-  if(!RESIDENTS_DETAIL[rname])RESIDENTS_DETAIL[rname]={medications:[],finance:{},plan:{}};
-  const d=RESIDENTS_DETAIL[rname];
+  const oldName=r[1];
+  const newName=document.getElementById('rd-name-input').value.trim()||oldName;
+  const newDob=document.getElementById('rd-dob-input').value||'—';
+  // RESの氏名・生年月日を更新
+  RES[currentResidentIdx][1]=newName;
+  RES[currentResidentIdx][2]=newDob;
+  // RESIDENTS_DETAILのキーを移動（名前変更時）
+  if(newName!==oldName&&RESIDENTS_DETAIL[oldName]){
+    RESIDENTS_DETAIL[newName]=RESIDENTS_DETAIL[oldName];
+    delete RESIDENTS_DETAIL[oldName];
+  }
+  if(!RESIDENTS_DETAIL[newName])RESIDENTS_DETAIL[newName]={medications:[],finance:{},plan:{}};
+  const d=RESIDENTS_DETAIL[newName];
   d.disabilityType=document.getElementById('rd-disability').value;
   d.supportLevel=document.getElementById('rd-level').value;
   d.finance={
@@ -1761,8 +1778,9 @@ function saveResidentDetail(){
   };
   closeModal('resident-detail-modal');
   renderResidents();
+  saveResStorage();
   safeStorage.set('cocon-residents-detail',JSON.stringify(RESIDENTS_DETAIL));
-  showSuccess('保存しました',`${rname}さんの情報を更新しました。`);
+  showSuccess('保存しました',`${newName}さんの情報を更新しました。`);
 }
 function switchResTab(tab,el){
   document.querySelectorAll('#resident-detail-modal .tab').forEach(t=>t.classList.remove('active'));
