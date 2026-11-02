@@ -2157,6 +2157,19 @@ function resetData(){
 // ══════════════════════════════
 let RES=[];
 
+// 事業所一覧（FAC_CLS）にあって経営データに無い事業所を自動で追加する
+function ensureFacilities(){
+  if(!KEIEI_DATA.facilities)KEIEI_DATA.facilities=[];
+  const names=Object.keys(FAC_CLS);let changed=false;
+  names.forEach((n,i)=>{
+    if(KEIEI_DATA.facilities.some(f=>f.name===n))return;
+    const e={name:n,capacity:0,residents:0,staffCost:0};
+    const idx=i>0?KEIEI_DATA.facilities.findIndex(f=>f.name===names[i-1]):-1;
+    if(idx>=0)KEIEI_DATA.facilities.splice(idx+1,0,e);else KEIEI_DATA.facilities.push(e);
+    changed=true;
+  });
+  if(changed)safeStorage.set('cocon-keiei',JSON.stringify(KEIEI_DATA));
+}
 let FAC_CLS={'梅田本町':'bt','大沼':'ba','大沼2':'ba','西金野井①':'bp','西金野井②':'bo','藤塚':'bg','牛島':'br','南中曾根':'bt','西金野井③':'bx'};
 const TODAY=new Date();
 
@@ -3294,6 +3307,7 @@ function showSuccess(t,b){document.getElementById('suc-title').textContent=t;doc
   try{const r=await safeStorage.get('cocon-history-v2');if(r)HISTORY=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-kasan-v2');if(r)KASAN=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-keiei');if(r)KEIEI_DATA=JSON.parse(r.value);}catch(e){}
+  try{ensureFacilities();}catch(e){}
   try{const r=await safeStorage.get('cocon-diary');if(r)DIARY=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-bcp');if(r){const d=JSON.parse(r.value);if(d.contacts)BCP_CONTACTS=d.contacts;if(d.shelters)BCP_SHELTERS=d.shelters;}}catch(e){}
   try{const r=await safeStorage.get('cocon-residents-detail');if(r)RESIDENTS_DETAIL=JSON.parse(r.value);}catch(e){}
