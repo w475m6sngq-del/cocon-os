@@ -183,6 +183,17 @@ tr:hover .arch-edit-btn{opacity:1;}
 <body>
 
 <!-- ══ 暗証番号ロック画面 ══ -->
+<div id="login-screen" style="position:fixed;inset:0;background:var(--teal);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100000;padding:1rem;">
+  <div style="color:#fff;font-family:'Lexend',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:.3rem;">COCON</div>
+  <div style="color:rgba(255,255,255,.7);font-size:.75rem;margin-bottom:2rem;">クラウドにログイン（端末ごとに最初の1回だけ）</div>
+  <form id="login-form" style="background:rgba(255,255,255,.12);border-radius:16px;padding:1.6rem;width:100%;max-width:340px;display:flex;flex-direction:column;gap:.7rem;">
+    <input id="login-email" type="email" autocomplete="username" placeholder="メールアドレス" style="padding:.8rem;border-radius:8px;border:none;font-size:1rem;">
+    <input id="login-pass" type="password" autocomplete="current-password" placeholder="パスワード" style="padding:.8rem;border-radius:8px;border:none;font-size:1rem;">
+    <button type="submit" style="padding:.85rem;border-radius:8px;border:none;background:#fff;color:var(--teal);font-weight:700;font-size:1rem;">ログイン</button>
+    <div id="login-err" style="color:#ffd0d0;font-size:.75rem;min-height:1rem;text-align:center;"></div>
+    <button type="button" onclick="useOffline()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:.7rem;text-decoration:underline;">ネットにつながらない時：この端末のデータだけで使う</button>
+  </form>
+</div>
 <div id="pin-screen" style="position:fixed;inset:0;background:var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;">
   <div style="color:#fff;font-family:'Lexend',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:.3rem;">COCON</div>
   <div style="color:rgba(255,255,255,.6);font-size:.72rem;margin-bottom:2.5rem;">株式会社COCON 業務支援システム</div>
@@ -823,6 +834,7 @@ tr:hover .arch-edit-btn{opacity:1;}
         <input type="file" id="backup-file" accept=".json,application/json" style="display:none" onchange="if(this.files[0])importBackup(this.files[0]);this.value=''">
       </div>
       <div id="backup-status" style="font-size:.74rem;margin-top:.5rem;color:var(--mu);"></div>
+      <div id="snapshot-box" style="margin-top:.6rem;"></div>
     </div>
   </div>
   <div class="card">
@@ -887,17 +899,15 @@ tr:hover .arch-edit-btn{opacity:1;}
     </div>
   </div>
   <div class="card">
-    <div class="ch"><div class="ch-title">☁️ Supabase 同期設定</div><span id="sync-dot-settings" style="font-size:1rem;"></span></div>
+    <div class="ch"><div class="ch-title">☁️ クラウド同期</div><span id="sync-dot-settings" style="font-size:1rem;"></span></div>
     <div class="cb">
-      <div class="alert ai" style="font-size:.76rem;">URLと匿名キーを設定すると、スタッフ全員が同じデータをリアルタイムで共有できます。</div>
-      <div class="fg"><label class="fl">Supabase URL</label><input class="fi" id="sb-url-input" type="text" placeholder="https://xxxxxxxx.supabase.co"></div>
-      <div class="fg" style="margin-top:.5rem;"><label class="fl">匿名キー（anon key）</label><input class="fi" id="sb-anon-input" type="password" placeholder="eyJ..."></div>
-      <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="saveSupabaseSettings()">✓ 保存して接続</button>
+      <div class="alert ai" style="font-size:.76rem;">ログインした端末どうしで、同じデータを自動で共有します。</div>
+      <div id="cloud-account" style="font-size:.8rem;margin:.5rem 0;"></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <button class="btn btn-ghost" onclick="testSupabaseConnection()">🔌 接続テスト</button>
+        <button class="btn btn-ghost" onclick="cloudLogout()">ログアウト</button>
       </div>
       <div id="sb-status-msg" style="margin-top:.5rem;font-size:.74rem;"></div>
-      <div class="alert ai" style="margin-top:1rem;font-size:.72rem;">⚠ クラウド同期は現在停止中です。安全な方式（ログイン付き）に作り直すまで、ここには何も入力しないでください。</div>
     </div>
   </div>
 </div>
@@ -1404,10 +1414,11 @@ tr:hover .arch-edit-btn{opacity:1;}
 // Supabase + safeStorage
 // ══════════════════════════════
 // デフォルト接続情報（設定画面で上書き可）
-const _SB_DEFAULT_URL='';
-const _SB_DEFAULT_KEY='';
+const _SB_DEFAULT_URL='https://lvznnctbgojsfoaytyio.supabase.co';
+const _SB_DEFAULT_KEY='sb_publishable_Og92JvF18YsMuTlq1TjOEg_h6L4WIko';
 let _sb=null;
 function getSb(){
+  if(window._cloudOff)return null;
   if(_sb)return _sb;
   const url=localStorage.getItem('cocon-sb-url')||_SB_DEFAULT_URL;
   const key=localStorage.getItem('cocon-sb-anon')||_SB_DEFAULT_KEY;
@@ -1431,6 +1442,11 @@ const safeStorage={
         if(!error&&data){
           try{localStorage.setItem(key,JSON.stringify(data.value));}catch(e){}
           return{value:JSON.stringify(data.value)};
+        }
+        if(error&&error.code==='PGRST116'){
+          // クラウドに無い項目は、この端末のデータをクラウドへ上げる
+          const lv=localStorage.getItem(key);
+          if(lv){try{await sb.from('app_data').upsert({key,value:JSON.parse(lv),updated_at:new Date().toISOString()},{onConflict:'key'});}catch(e){}}
         }
       }catch(e){}
     }
@@ -1482,6 +1498,59 @@ function importBackup(file){
   };
   rd.readAsText(file);
 }
+
+// ══════════════════════════════
+// クラウドログイン
+// ══════════════════════════════
+let _offline=false;
+function useOffline(){_offline=true;const el=document.getElementById('login-screen');if(el)el.style.display='none';if(window._loginResolve)window._loginResolve();}
+function waitForLogin(sb){
+  return new Promise(res=>{
+    window._loginResolve=res;
+    const el=document.getElementById('login-screen');el.style.display='flex';
+    document.getElementById('login-form').onsubmit=async ev=>{
+      ev.preventDefault();
+      const err=document.getElementById('login-err');err.textContent='ログイン中...';
+      const email=document.getElementById('login-email').value.trim();
+      const password=document.getElementById('login-pass').value;
+      const{error}=await sb.auth.signInWithPassword({email,password});
+      if(error){err.textContent='ログインできませんでした（メールアドレスかパスワードが違います）';return;}
+      err.textContent='';el.style.display='none';res();
+    };
+  });
+}
+async function cloudLogout(){
+  if(!confirm('この端末をログアウトしますか？（データは消えません。次に開くときにログインが必要です）'))return;
+  const sb=getSb();if(sb)await sb.auth.signOut();location.reload();
+}
+async function showCloudAccount(){
+  const el=document.getElementById('cloud-account');if(!el)return;
+  const sb=getSb();if(!sb||_offline){el.textContent='クラウド：未接続（この端末のデータのみ）';return;}
+  const{data}=await sb.auth.getSession();
+  el.innerHTML=data.session?('ログイン中：<b>'+data.session.user.email+'</b>'):'クラウド：未ログイン';
+}
+// 初めてクラウドにつなぐ前に、この端末のデータを控えとして残す
+function takeLocalSnapshot(){
+  if(localStorage.getItem('cocon-cloud-first-sync'))return;
+  const snap={_app:'COCON運営OS',_exportedAt:new Date().toISOString(),_note:'クラウド接続前のこの端末のデータ',data:{}};
+  BACKUP_KEYS.forEach(k=>{const v=localStorage.getItem(k);if(v){try{snap.data[k]=JSON.parse(v);}catch(e){}}});
+  if(Object.keys(snap.data).length){try{localStorage.setItem('cocon-local-snapshot',JSON.stringify(snap));}catch(e){}}
+  localStorage.setItem('cocon-cloud-first-sync',new Date().toISOString());
+}
+function renderSnapshotBox(){
+  const box=document.getElementById('snapshot-box');if(!box)return;
+  const s=localStorage.getItem('cocon-local-snapshot');
+  if(!s){box.innerHTML='';return;}
+  const d=JSON.parse(s);
+  box.innerHTML='<div class="alert ai" style="font-size:.74rem;">📦 クラウド接続前（'+new Date(d._exportedAt).toLocaleString('ja-JP')+'）のこの端末のデータを控えています。<br><button class="btn btn-ghost btn-sm" style="margin-top:.4rem" onclick="exportSnapshot()">⬇ 接続前の控えを書き出す</button></div>';
+}
+function exportSnapshot(){
+  const s=localStorage.getItem('cocon-local-snapshot');if(!s)return;
+  const blob=new Blob([s],{type:'application/json'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='COCON_接続前の控え_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+}
+
 // ブラウザにデータを消されにくくする（対応ブラウザのみ）
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
 document.addEventListener('DOMContentLoaded',()=>showBackupStatus(''));
@@ -3130,17 +3199,12 @@ async function runSecurityCheck(){
     }
   }catch(e){checks.push({label:'Supabase接続',ok:false,note:e.message});}
 
-  // ② RLS（allow_allポリシーがないこと）
+  // ② ログイン必須
   try{
-    const sb=getSb();
-    if(sb){
-      // allow_allが存在しないことを確認（存在すれば危険）
-      const{data,error}=await sb.from('app_data').insert({key:'__security_test__',value:{test:true}});
-      // __security_test__は'cocon-'で始まらないのでRLSで弾かれるはず
-      const blocked=error&&(error.code==='42501'||error.message?.includes('policy'));
-      checks.push({label:'RLSポリシー',ok:blocked,note:blocked?'不正な書き込みをブロック済み':'⚠ ポリシーを確認してください'});
-    }
-  }catch(e){checks.push({label:'RLSポリシー',ok:true,note:'ブロック確認済み'});}
+    const sb=getSb();let s=null;
+    if(sb){const r=await sb.auth.getSession();s=r.data.session;}
+    checks.push({label:'クラウドのログイン',ok:!!s,note:s?('ログイン中：'+s.user.email):'未ログイン（この端末のデータのみ）'});
+  }catch(e){checks.push({label:'クラウドのログイン',ok:false,note:e.message});}
 
   // ③ 暗証番号設定
   const pinSet=localStorage.getItem('cocon-pin');
@@ -3299,6 +3363,15 @@ function showSuccess(t,b){document.getElementById('suc-title').textContent=t;doc
     const ps=document.getElementById('pin-screen');
     if(ps)ps.remove();
   }
+  // クラウドのログイン確認（未ログインならログイン画面）
+  try{
+    const sb0=getSb();
+    if(sb0){
+      const{data}=await sb0.auth.getSession();
+      if(!data.session)await waitForLogin(sb0);
+      if(_offline){_sb=null;window._cloudOff=true;}else takeLocalSnapshot();
+    }
+  }catch(e){}
   try{const r=await safeStorage.get('cocon-staff-v2');if(r)STAFF=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-shido-v2');if(r)shidoState=JSON.parse(r.value);}catch(e){}
   try{const r=await safeStorage.get('cocon-res-v2');if(r)RES=JSON.parse(r.value);}catch(e){}
@@ -3323,7 +3396,8 @@ function showSuccess(t,b){document.getElementById('suc-title').textContent=t;doc
   renderKeiei();
   loadSettings();
   const sb=document.getElementById('sb-shido-badge');if(sb)sb.style.display='none';
-  setupRealtimeSync();
+  if(!window._cloudOff)setupRealtimeSync();else setSyncStatus('off');
+  renderSnapshotBox();showCloudAccount();
 })();
 </script>
 </body>
